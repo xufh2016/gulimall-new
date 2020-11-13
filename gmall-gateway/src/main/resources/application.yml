@@ -1,0 +1,19 @@
+spring:
+  cloud:
+    gateway:
+      routes:
+        # 表示当访问/api/product/地址时，会自动转发到gmall-product/api/product/
+        - id: product_route
+          uri: lb://gmall-product
+#          判断依据，也即是断言，如果是以api/product开头的请求就转发到gmall-product服务
+          predicates:
+            - Path=/api/product/**
+          filters:
+            - RewritePath=/api/(?<segment>),/$\{segment}
+        - id: admin_route
+          uri: lb://renren-fast
+          predicates:
+            - Path=/api/**
+          filters:
+            - RewritePath=/api/(?<segment>),/renren-fast/$\{segment}
+            ### 设置规则，所有前端项目都通过/api

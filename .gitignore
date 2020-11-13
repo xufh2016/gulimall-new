@@ -1,6 +1,10 @@
 # Compiled class file
 *.class
-
+**/mvnw
+**/mvnw.cmd
+**/.mvn
+.idea
+**/.gitignore
 # Log file
 *.log
 
@@ -21,3 +25,24 @@
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
+.idea/codeStyles/
+.idea/compiler.xml
+.idea/encodings.xml
+.idea/gulimall-new.iml
+.idea/inspectionProfiles/
+.idea/libraries/
+.idea/misc.xml
+.idea/modules.xml
+.idea/qaplug_profiles.xml
+.idea/vcs.xml
+.idea/workspace.xml
+gmall-coupon/src/main/resources/static/
+gmall-coupon/src/main/resources/templates/
+gmall-memeber/src/main/resources/static/
+gmall-memeber/src/main/resources/templates/
+gmall-order/src/main/resources/static/
+gmall-order/src/main/resources/templates/
+gmall-product/src/main/resources/static/
+gmall-product/src/main/resources/templates/
+gmall-ware/src/main/resources/static/
+gmall-ware/src/main/resources/templates/
