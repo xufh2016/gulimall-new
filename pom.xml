@@ -9,7 +9,9 @@
     <name>gmall-new</name>
     <description>聚合服务</description>
     <packaging>pom</packaging>
-
+    <properties>
+        <java.version>1.8</java.version>
+    </properties>
     <modules>
         <module>gmall-coupon</module>
         <module>gmall-order</module>
@@ -19,6 +21,7 @@
         <module>renren-fast</module>
         <module>renren-generator</module>
         <module>gmall-common</module>
+        <module>gmall-third-party</module>
     </modules>
 
 </project>
