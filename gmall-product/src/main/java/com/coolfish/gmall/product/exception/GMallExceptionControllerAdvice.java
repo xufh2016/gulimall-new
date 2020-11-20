@@ -13,10 +13,11 @@ import java.util.Map;
 
 /**
  * 集中处理所有异常
+ * 1、 @ControllerAdvice(basePackages = "com.coolfish.gmall.product.controller") 用于指定给哪个包下的进行异常处理
+ * 2、 @ExceptionHandler用于告诉SpringMvc此异常处理类用于处理哪些异常，这些异常由@ExceptionHandler中的value值进行指定
+ * 例如：@ExceptionHandler(value = MethodArgumentNotValidException.class)
  */
 @Slf4j
-//@ControllerAdvice(basePackages = "com.coolfish.gmall.product.controller")
-//
 @RestControllerAdvice(basePackages = "com.coolfish.gmall.product.controller")
 public class GMallExceptionControllerAdvice {
 

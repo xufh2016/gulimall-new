@@ -1,0 +1,26 @@
+package com.coolfish.gmall.product.service;
+
+import com.baomidou.mybatisplus.extension.service.IService;
+import com.coolfish.common.utils.PageUtils;
+import com.coolfish.gmall.product.entity.CategoryBrandRelationEntity;
+
+import java.util.Map;
+
+/**
+ * 品牌分类关联
+ *
+ * @author coolfish
+ * @email sunlightcs@gmail.com
+ * @date 2020-11-16 16:25:28
+ */
+public interface CategoryBrandRelationService extends IService<CategoryBrandRelationEntity> {
+
+    PageUtils queryPage(Map<String, Object> params);
+
+    void saveDetail(CategoryBrandRelationEntity categoryBrandRelation);
+
+    void updateBrand(Long brandId, String name);
+
+    void updateCategory(Long catId, String name);
+}
+

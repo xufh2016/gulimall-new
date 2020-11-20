@@ -1,18 +1,21 @@
 package com.coolfish.gmall.product.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.coolfish.common.utils.PageUtils;
 import com.coolfish.common.utils.Query;
 import com.coolfish.gmall.product.dao.CategoryDao;
 import com.coolfish.gmall.product.entity.CategoryEntity;
+import com.coolfish.gmall.product.service.CategoryBrandRelationService;
 import com.coolfish.gmall.product.service.CategoryService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -21,6 +24,8 @@ import java.util.stream.Collectors;
  */
 @Service("categoryService")
 public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity> implements CategoryService {
+    @Autowired
+    CategoryBrandRelationService categoryBrandRelationService;
 
     @Override
     public PageUtils queryPage(Map<String, Object> params) {
@@ -51,6 +56,35 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
         //todo: 檢查是否有別的地方引用
 
         baseMapper.deleteBatchIds(asList);
+    }
+
+    @Override
+    public Long[] findCatelogPath(Long catelogId) {
+        List<Long> paths = new ArrayList<>();
+        List<Long> parentPath = findParentPath(catelogId, paths);
+        Collections.reverse(parentPath);
+        return parentPath.toArray(new Long[parentPath.size()]);
+    }
+
+    /**
+     * 级联更新
+     *  @Transactional开启事务
+     * @param category
+     */
+    @Transactional
+    @Override
+    public void updateCascader(CategoryEntity category) {
+        this.updateById(category);
+        categoryBrandRelationService.updateCategory(category.getCatId(),category.getName());
+    }
+
+    private List<Long> findParentPath(Long catId, List<Long> paths) {
+        paths.add(catId);
+        CategoryEntity byId = this.getById(catId);
+        if (byId.getParentCid() != 0) {
+            findParentPath(byId.getParentCid(), paths);
+        }
+        return paths;
     }
 
     /**

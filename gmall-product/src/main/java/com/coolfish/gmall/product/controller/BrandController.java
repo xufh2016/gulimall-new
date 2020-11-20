@@ -84,7 +84,7 @@ public class BrandController {
     @RequestMapping("/update")
     public R update(@RequestBody BrandEntity brand) {
         if (null != brand) {
-            brandService.updateById(brand);
+            brandService.updateDetail(brand);
             return R.ok();
         } else {
             return R.error();

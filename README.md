@@ -25,13 +25,13 @@
 1. 在pom文件中引入open-feign
 2. 在调用方编写一个接口，告诉springcloud这个接口需要调用远程服务,声明接口中的每一个方法都是调用哪个远程服务的那个请求，实例如下
     ```java
-    @FeignClient("gmall-coupon")
-    public interface CouponFeignService {
+    @FeignClient("gmall-coupon")//gmall-coupon是服务名
+    public interface CouponFeignService { //完整拷贝被调用方的controller中的方法签名及路由请求
         @RequestMapping("coupon/coupon/member-coupon")
         public R memberCoupons();
     }
     ```
-3. 开启远程调用功能,在主类上上添加注解 @EnableFeignClients并设置feign的基础包
+3. 开启远程调用功能,在主类上添加注解 @EnableFeignClients并设置feign的基础包basePackages属性
     ```java
     @EnableDiscoveryClient
     @SpringBootApplication
@@ -44,7 +44,7 @@
     ```
 ##nacos作为配置中心使用
 1. 引入spring-cloud-starter-alibaba-nacos-config依赖
-2. 创建一个bootstrap.properties文件，名字是固定的，并在其中配置如下
+2. 创建一个bootstrap.properties文件，文件的名字是固定的，并在其中配置如下
     ```properties
     spring.cloud.nacos.config.server-addr=127.0.0.1:8848
     spring.application.name=gmall-coupon
@@ -89,24 +89,12 @@
  5. 同时加载多个配置集
     + 微服务任何配置信息，任何配置文件都可以放在配置中心中
     + 只需要在bootstrap.properties说明加载配置中心中的哪些配置文件即可，配置中心中有的优先使用配置中心的
-  在bootstrap.properties文件中用这个配置项即可
+      在bootstrap.properties文件中用这个配置项即可
       ```properties
        spring.cloud.nacos.config.ext-config[0].data-id=自定义的配置文件名
       ```  
       spring.cloud.nacos.config.ext-config是个集合List   
  6. 各个微服务中添加了配置中心的依赖以后，需要在资源文件中添加bootstrap.properties的配置文件，并配置相关的配置中心地址等相关信息
-```yaml
- routes:
-#id：表示唯一的路由，每个路由都需要一个唯一的ID
-    - id: product_route
-# uri:表示目标地址
-      uri: lb://gmall-product #路由，此处必须和application.name的配置一直
-#          判断依据，也即是断言，如果是以api/product开头的请求就转发到gmall-product服务
-      predicates:
-        - Path=/api/product/** #表示匹配/api/product/路径下的任意路径
-      filters:
-        - RewritePath=/api/(?<segment>),/$\{segment}
-```
 
 ##网关Gateway
 
@@ -116,43 +104,124 @@
  3. 过滤器  
  * 需要注意的地方 熟悉gateway的路由和断言规则
  * 需要配置通用的跨域类或使用nginx做代理
- ```java
-package com.coolfish.gmall.gateway.config;
-
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.web.cors.reactive.CorsWebFilter;
-import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
-
-@Configuration
-public class CorsConfiguration {
-    @Bean
-    public CorsWebFilter corsWebFilter() {
-        UrlBasedCorsConfigurationSource co = new UrlBasedCorsConfigurationSource();
-        org.springframework.web.cors.CorsConfiguration corsConfiguration = new org.springframework.web.cors.CorsConfiguration();
-        corsConfiguration.addAllowedHeader("*");
-        corsConfiguration.addAllowedMethod("*");
-        corsConfiguration.addAllowedOrigin("*");
-        corsConfiguration.setAllowCredentials(true);
-        co.registerCorsConfiguration("/**", corsConfiguration);
-        return new CorsWebFilter(co);
+     ```java
+    package com.coolfish.gmall.gateway.config;
+    
+    import org.springframework.context.annotation.Bean;
+    import org.springframework.context.annotation.Configuration;
+    import org.springframework.web.cors.reactive.CorsWebFilter;
+    import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
+    
+    @Configuration
+    public class CorsConfiguration {
+        @Bean
+        public CorsWebFilter corsWebFilter() {
+            UrlBasedCorsConfigurationSource co = new UrlBasedCorsConfigurationSource();
+            org.springframework.web.cors.CorsConfiguration corsConfiguration = new org.springframework.web.cors.CorsConfiguration();
+            corsConfiguration.addAllowedHeader("*");
+            corsConfiguration.addAllowedMethod("*");
+            corsConfiguration.addAllowedOrigin("*");
+            corsConfiguration.setAllowCredentials(true);
+            co.registerCorsConfiguration("/**", corsConfiguration);
+            return new CorsWebFilter(co);
+        }
     }
-}
-```
- 
+    ```
+   配置文件： 
+   ```yaml
+     routes:
+    #id：表示唯一的路由，每个路由都需要一个唯一的ID
+        - id: product_route
+    # uri:表示目标地址
+          uri: lb://gmall-product #路由，此处必须和application.name的配置一直
+    #          判断依据，也即是断言，如果是以api/product开头的请求就转发到gmall-product服务
+          predicates:
+            - Path=/api/product/** #表示匹配/api/product/路径下的任意路径
+          filters:
+            - RewritePath=/api/(?<segment>),/$\{segment}
+    ``` 
  
  ##Mybatis Plus
  
  1. 设置mybatis debug输出
- ```yaml
-logging:
-  level:
-    com.baomidou.mybatisplus.samples: debug
-```
- 
+    ```yaml
+    logging:
+      level:
+        com.baomidou.mybatisplus.samples: debug
+    ```
+ 2. Springboot中引入分页插件的方法
+    ```java
+    import com.baomidou.mybatisplus.extension.plugins.PaginationInterceptor;
+    import com.baomidou.mybatisplus.extension.plugins.pagination.optimize.JsqlParserCountOptimize;
+    import org.mybatis.spring.annotation.MapperScan;
+    import org.springframework.context.annotation.Bean;
+    import org.springframework.context.annotation.Configuration;
+    import org.springframework.transaction.annotation.EnableTransactionManagement;
+    
+    @Configuration
+    @EnableTransactionManagement
+    @MapperScan("com.coolfish.gmall.product.dao")
+    public class MyBatisConfig {
+        @Bean
+        public PaginationInterceptor paginationInterceptor() {
+            PaginationInterceptor paginationInterceptor = new PaginationInterceptor();
+            // 设置请求的页面大于最大页后操作， true调回到首页，false 继续请求  默认false
+             paginationInterceptor.setOverflow(true);
+            // 设置最大单页限制数量，默认 500 条，-1 不受限制
+             paginationInterceptor.setLimit(1000);
+            // 开启 count 的 join 优化,只针对部分 left join
+            paginationInterceptor.setCountSqlParser(new JsqlParserCountOptimize(true));
+            return paginationInterceptor;
+        }
+    }
+    ```
+ 3. 使用p6spy进行打印sql语句的步骤：
+    + 引入依赖
+      ```xml
+      <dependency>
+          <groupId>p6spy</groupId>
+          <artifactId>p6spy</artifactId>
+          <version>3.9.0</version>
+      </dependency>
+      ```
+    + 在application.yml文件中添加如下：
+      ```yaml
+      spring:
+        datasource:
+          username: root
+          password: root
+          driver-class-name: com.p6spy.engine.spy.P6SpyDriver
+          url: jdbc:p6spy:mysql://localhost:3306/guli_pms  
+      ```
+    + 在resources目录下添加spy.properties文件，值得注意的是modulelist需要注释掉
+      ```properties
+      #3.2.1以上使用
+      # modulelist=com.baomidou.mybatisplus.extension.p6spy.MybatisPlusLogFactory,com.p6spy.engine.outage.P6OutageFactory
+      #3.2.1以下使用或者不配置
+      #modulelist=com.p6spy.engine.logging.P6LogFactory,com.p6spy.engine.outage.P6OutageFactory
+      # 自定义日志打印
+      logMessageFormat=com.baomidou.mybatisplus.extension.p6spy.P6SpyLogger
+      #日志输出到控制台
+      appender=com.baomidou.mybatisplus.extension.p6spy.StdoutLogger
+      # 使用日志系统记录 sql
+      #appender=com.p6spy.engine.spy.appender.Slf4JLogger
+      # 设置 p6spy driver 代理
+      deregisterdrivers=true
+      # 取消JDBC URL前缀
+      useprefix=true
+      # 配置记录 Log 例外,可去掉的结果集有error,info,batch,debug,statement,commit,rollback,result,resultset.
+      excludecategories=info,debug,result,commit,resultset
+      # 日期格式
+      dateformat=yyyy-MM-dd HH:mm:ss
+      # 实际驱动可多个
+      #driverlist=org.h2.Driver
+      # 是否开启慢SQL记录
+      outagedetection=true
+      # 慢SQL记录标准 2 秒
+      outagedetectioninterval=2
+      ```
 
-
-##aliyun OSS 阿里对象云存储
+##Aliyun OSS 阿里对象云存储
 1. 引入依赖
     ```xml
      <dependency>
@@ -163,14 +232,14 @@ logging:
 2. 配置key、endpoint相关操作即可
 3. 使用OSSClient进行相关操作
 4. 在配置中心中添加如下
-    ```yaml
-       spring:
-         cloud:
-           alicloud:
-             access-key: LTAI4G4a6BaJHCz73MtEFRkV
-             secret-key: Za7Yo6T1W6YER4qUtXyFujA7SGdsh7
-             oss:
-               endpoint: oss-cn-qingdao.aliyuncs.com
+   ```yaml
+   spring:
+     cloud:
+       alicloud:
+         access-key: LTAI4G4a6BaJHCz73Mt2EFRkV
+         secret-key: Za7Yo6T1W6YER4qUtXyFujA27SGdsh7
+         oss:
+           endpoint: oss-cn-qingdao.aliyuncs.com
     ```
 5. 后端校验policy
     ```java
@@ -215,11 +284,11 @@ logging:
  ##JSR 303
  1. 给bean添加校验规则注解并定义自己的message提示,来源包如下
     ```java
-     import javax.validation.constraints;
+    import javax.validation.constraints;
     ```
  2. 在请求接口函数的入参中添加 @Valid 注解，使得SpringMvc启用校验注解,如果要获取校验的结果，在被注解的参数后面紧跟**BindingResult参数**，
-     例如：
-     ```java
+    例如：
+    ```java
     @RequestMapping("/save")
     public R save(@Valid @RequestBody BrandEntity brand, BindingResult result) {
         if (result.hasErrors()) {
@@ -237,7 +306,7 @@ logging:
     }
     ```
  3. 统一异常处理
-    + 使用注解@ControllerAdvice+@ResponseBody或@RestControllerAdvice注解，例如下面代码
+    + 使用注解@ControllerAdvice+@ResponseBody或@RestControllerAdvice注解，这样就可以在业务中直接抛出异常就行。例如下面代码
       ```java
       package com.coolfish.gmall.product.exception;
       
@@ -251,12 +320,25 @@ logging:
       import java.util.HashMap;
       import java.util.Map;
       
+      import com.coolfish.common.utils.R;
+      import lombok.extern.slf4j.Slf4j;
+      import org.springframework.validation.BindingResult;
+      import org.springframework.web.bind.MethodArgumentNotValidException;
+      import org.springframework.web.bind.annotation.ExceptionHandler;
+      import org.springframework.web.bind.annotation.RestControllerAdvice;
+      
+      import java.util.HashMap;
+      import java.util.Map;
+      
       /**
        * 集中处理所有异常
+       * 1、@ControllerAdvice(basePackages = "com.coolfish.gmall.product.controller") 用于指定给哪个包下的进行统一的异常处理
+       * 2、@ExceptionHandler用于告诉SpringMvc此异常处理类用于处理哪些异常，这些异常由@ExceptionHandler中的value值进行指定
+       *    例如：@ExceptionHandler(value = MethodArgumentNotValidException.class)
+       * 3、@RestControllerAdvice = @ControllerAdvice + @ResponseBody
+       * 4、通过异常对象获取BindingResult，异常内容都在BindingResult中。
        */
       @Slf4j
-      //@ControllerAdvice(basePackages = "com.coolfish.gmall.product.controller")
-      //
       @RestControllerAdvice(basePackages = "com.coolfish.gmall.product.controller")
       public class GMallExceptionControllerAdvice {
       
@@ -271,7 +353,7 @@ logging:
               });
       
               log.error("数据校验出现问题{}，异常类型：{}", e.getMessage(), e.getClass());
-              return R.error(400).put("data", map);
+              return R.error().put("data", map);
           }
       
           // 大范围的异常处理，在此例中是指上面的异常处理方法不能精确处理时，使用此处的异常处理方法
@@ -342,6 +424,18 @@ logging:
         }
     
       ```  
+    + 在controller中不接受异常，直接抛出异常就可以例如：
+      ```java
+      @RequestMapping("/save")
+      public R save(@Validated({AddGroup.class}) @RequestBody BrandEntity brand/*, BindingResult result*/) {      
+          brandService.save(brand);
+          return R.ok();
+      }
+       ```
+      有@Validated或@Valid进行注解的会被直接抛出，而参数中的BindingResult result则会收集这些异常。
+        
+ 
+ 
  4.  分组校验，也是JSR303注解提供的功能
        + 在校验注解中添加group属性及值，**@NotEmpty(message = "不能为空",groups = {UpdateGroup.class})**，这样可以标注校验注解在什么情况下
          需要进行校验例如：
@@ -350,7 +444,7 @@ logging:
         @URL
         private String logo;
        ```
-       用了分组校验就需要将原来接口方法入参的@Valid注解更换为@Validated注解，如下：
+       用了分组校验就需要将原来接口方法入参的@Valid注解更换为@Validated注解，@Validated注解是hibernate包提供的注解，如下：
        ```java
         public R save(@Validated({AddGroup.class/*分组接口类*/}) @RequestBody BrandEntity brand/*, BindingResult result*/) {
        ``` 
@@ -359,7 +453,7 @@ logging:
  5. 自定义校验过程
     + 编写一个自定义的校验注解
     + 编写一个自定义的校验器
-    + 关联自定义的校验器和自定义的校验注解
+    + 关联自定义的校验器和自定义的校验注解，关联是通过@Constraint中的属性validatedBy = {ListValueConstraintValidator.class}进行的
     + 代码示例：
     ```java
      package com.coolfish.common.valid;
@@ -421,4 +515,9 @@ logging:
         }
     
        ```
+       **1、@JsonInclude(JsonInclude.Include.NON_EMPTY)注解表示某个字段不为空时，才返回到json对象中**
+ 6. @Transactional  注解只能应用到 public 可见度的方法上。默认情况下，Spring会对unchecked异常进行事务回滚；如果是checked异常则不回滚。
+     通俗一点：你写代码出现的空指针等异常，会被回滚，文件读写，网络出问题，spring就没法回滚了。
     
+##VO
+1.  View Object，用于接收页面传递的数据，封装对象。将业务处理完成的对象，封装成页面要用的对象

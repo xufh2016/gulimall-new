@@ -2,8 +2,11 @@ spring:
   datasource:
     username: root
     password: root
-    url: jdbc:mysql://localhost:3306/guli_pms
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    driver-class-name: com.p6spy.engine.spy.P6SpyDriver
+    url: jdbc:p6spy:mysql://localhost:3306/guli_pms
+
+  #    url: jdbc:mysql://localhost:3306/guli_pms
+#    driver-class-name: com.mysql.cj.jdbc.Driver
   cloud:
     nacos:
       discovery:
@@ -14,8 +17,6 @@ spring:
     name: gmall-product
 mybatis-plus:
   mapper-locations: classpath:/mapper/**/*.xml
-  configuration:
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
   #  配置主键自增
   global-config:
     db-config:
@@ -27,4 +28,4 @@ server:
 
 logging:
   level:
-    com.baomidou.mybatisplus.samples: debug
+    com.coolfish.gmall.product: debug
