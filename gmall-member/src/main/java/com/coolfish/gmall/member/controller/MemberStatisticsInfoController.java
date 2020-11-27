@@ -25,7 +25,7 @@ import com.coolfish.common.utils.R;
  * @date 2020-11-03 09:08:57
  */
 @RestController
-@RequestMapping("memeber/memberstatisticsinfo")
+@RequestMapping("member/memberstatisticsinfo")
 public class MemberStatisticsInfoController {
     @Autowired
     private MemberStatisticsInfoService memberStatisticsInfoService;

@@ -25,7 +25,7 @@ import com.coolfish.common.utils.R;
  * @date 2020-11-03 09:08:57
  */
 @RestController
-@RequestMapping("memeber/growthchangehistory")
+@RequestMapping("member/growthchangehistory")
 public class GrowthChangeHistoryController {
     @Autowired
     private GrowthChangeHistoryService growthChangeHistoryService;

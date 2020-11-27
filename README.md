@@ -15,6 +15,12 @@
    + order：9000
    + product：10000
    + ware：11000
+2. springboot用于启动环境的配置：
+   ```yaml
+   spring:
+     profiles:
+       active: dev
+   ```
     
 ##使用nacos注册中心
 + 在主类上标记@EnableDiscoveryClient注解
@@ -521,3 +527,68 @@
     
 ##VO
 1.  View Object，用于接收页面传递的数据，封装对象。将业务处理完成的对象，封装成页面要用的对象
+
+
+
+
+
+
+
+
+
+#FastDFS
+
+##linux
+1. apt修改国内镜像源使用命令：
+    ```shell script
+    sudo nona /etc/apt/sources.list
+    ```
+   然后在该文件中替换如下内容
+   ```shell script
+   deb http://mirrors.aliyun.com/ubuntu/ bionic main restricted universe multiverse
+   # deb-src https://mirrors.aliyun.com/ubuntu/ bionic main restricted universe multiverse
+   deb http://mirrors.aliyun.com/ubuntu/ bionic-updates main restricted universe multiverse
+   # deb-src http://mirrors.aliyun.com/ubuntu/ bionic-updates main restricted universe multiverse
+   deb http://mirrors.aliyun.com/ubuntu/ bionic-backports main restricted universe multiverse
+   # deb-src http://mirrors.aliyun.com/ubuntu/ bionic-backports main restricted universe multiverse
+   deb http://mirrors.aliyun.com/ubuntu/ bionic-security main restricted universe multiverse
+   # deb-src http://mirrors.aliyun.com/ubuntu/ bionic-security main restricted universe multiverse
+   ```
+   再ctrl+x保存退出，执行
+   ```shell script
+   sudo apt-get update
+   ```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#Idea报错信息
+1. IDEA下报 SpringBoot Configuration Annotation Processor not found in classpath解决方案:
+   ```xml
+   <!-- 自定义的元数据依赖-->
+   <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-configuration-processor</artifactId>
+      <optional>true</optional>
+   </dependency>
+   ```

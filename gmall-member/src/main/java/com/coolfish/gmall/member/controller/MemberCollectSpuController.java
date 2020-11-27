@@ -25,7 +25,7 @@ import com.coolfish.common.utils.R;
  * @date 2020-11-03 09:08:57
  */
 @RestController
-@RequestMapping("memeber/membercollectspu")
+@RequestMapping("member/membercollectspu")
 public class MemberCollectSpuController {
     @Autowired
     private MemberCollectSpuService memberCollectSpuService;

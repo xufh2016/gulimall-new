@@ -11,6 +11,7 @@ import com.coolfish.gmall.product.service.CategoryService;
 import com.coolfish.gmall.product.vo.AttrGroupRelationVo;
 import com.coolfish.gmall.product.vo.AttrRespVo;
 import com.coolfish.gmall.product.vo.AttrVo;
+import jdk.nashorn.internal.ir.CallNode;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -84,7 +85,7 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
             BeanUtils.copyProperties(attrEntity, respVo);
             if ("base".equalsIgnoreCase(attrType)) {
                 AttrAttrgroupRelationEntity entity = relationDao.selectOne(new QueryWrapper<AttrAttrgroupRelationEntity>().eq("attr_id", attrEntity.getAttrId()));
-                if (entity != null) {
+                if (entity != null && entity.getAttrGroupId() != null) {
                     AttrGroupEntity attrGroupEntity = attrGroupDao.selectById(entity.getAttrGroupId());
                     respVo.setGroupName(attrGroupEntity.getAttrGroupName());
                 }
@@ -109,7 +110,7 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
         BeanUtils.copyProperties(attr, attrEntity);
         this.save(attrEntity);
 //        保存关联关系
-        if (attr.getAttrType() == ProductConstant.AttrEnum.ATTR_TYPE_BASE.getCode()) {
+        if (attr.getAttrType() == ProductConstant.AttrEnum.ATTR_TYPE_BASE.getCode() && attr.getAttrGroupId() != null) {
             AttrAttrgroupRelationEntity relationEntity = new AttrAttrgroupRelationEntity();
             relationEntity.setAttrGroupId(attr.getAttrGroupId());
             relationEntity.setAttrId(attr.getAttrId());
@@ -168,9 +169,10 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
     @Override
     public List<AttrEntity> getRelationAttr(Long attrgroupid) {
         List<AttrAttrgroupRelationEntity> entities = relationDao.selectList(new QueryWrapper<AttrAttrgroupRelationEntity>().eq("attr_group_id", attrgroupid));
-        List<Long> ids = entities.stream().map(entity -> {
-            return entity.getAttrId();
-        }).collect(Collectors.toList());
+        List<Long> ids = entities.stream().map(AttrAttrgroupRelationEntity::getAttrId).collect(Collectors.toList());
+        if (ids == null || ids.size() == 0) {
+            return null;
+        }
         Collection<AttrEntity> attrEntities = this.listByIds(ids);
         return (List<AttrEntity>) attrEntities;
     }
@@ -185,6 +187,41 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
             return relationEntity;
         }).collect(Collectors.toList());
         relationDao.deleteBatchRelation(entities);
+    }
+
+
+    /**
+     * 获取当前分组没有关联的所有属性
+     *
+     * @param params
+     * @param attrgroupid
+     * @return
+     */
+    @Override
+    public PageUtils getNoRelationAttr(Map<String, Object> params, Long attrgroupid) {
+
+//当前分组只能关联自己所属的分类里面的所有属性
+
+        AttrGroupEntity attrGroupEntity = attrGroupDao.selectById(attrgroupid);
+        Long catelogId = attrGroupEntity.getCatelogId();
+
+        List<AttrGroupEntity> group = attrGroupDao.selectList(new QueryWrapper<AttrGroupEntity>().eq("catelog_id", catelogId).ne("attr_group_id", attrgroupid));
+        List<Long> collect = group.stream().map(AttrGroupEntity::getAttrGroupId).collect(Collectors.toList());
+        List<AttrAttrgroupRelationEntity> groupId = relationDao.selectList(new QueryWrapper<AttrAttrgroupRelationEntity>().in("attr_group_id", collect));
+        List<Long> attrIds = groupId.stream().map(AttrAttrgroupRelationEntity::getAttrId).collect(Collectors.toList());
+        QueryWrapper<AttrEntity> wrapper = new QueryWrapper<AttrEntity>().eq("catelog_id", catelogId).eq("attr_type", ProductConstant.AttrEnum.ATTR_TYPE_BASE.getCode());
+        if (attrIds != null && attrIds.size() > 0) {
+            wrapper.notIn("attr_id", attrIds);
+        }
+        String key = (String) params.get("key");
+        if (StringUtils.isEmpty(key)) {
+            wrapper.and((w) -> {
+                w.eq("attr_id", key).or().like("attr_name", key);
+            });
+        }
+        IPage<AttrEntity> page = this.page(new Query<AttrEntity>().getPage(params), wrapper);
+        PageUtils pageUtils = new PageUtils(page);
+        return pageUtils;
     }
 
 }

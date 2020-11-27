@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.coolfish.gmall.product.entity.AttrEntity;
+import com.coolfish.gmall.product.service.AttrAttrgroupRelationService;
 import com.coolfish.gmall.product.service.AttrService;
 import com.coolfish.gmall.product.service.CategoryService;
 import com.coolfish.gmall.product.vo.AttrGroupRelationVo;
@@ -36,6 +37,9 @@ public class AttrGroupController {
     @Autowired
     AttrService attrService;
 
+    @Autowired
+    AttrAttrgroupRelationService relationService;
+
     @PostMapping("/attr/relation/delete")
     public R deleteRelation(@RequestBody AttrGroupRelationVo[] vos) {
         attrService.deleteRelation(vos);
@@ -51,6 +55,21 @@ public class AttrGroupController {
         List<AttrEntity> relationAttr = attrService.getRelationAttr(attrgroupid);
 
         return R.ok().put("data", relationAttr);
+    }
+
+    @GetMapping("/{attrgroupid}/noattr/relation")
+    public R attrNoRelation(@PathVariable("attrgroupid") Long attrgroupid, @RequestParam Map<String, Object> params) {
+        PageUtils page = attrService.getNoRelationAttr(params, attrgroupid);
+
+        return R.ok().put("data", page);
+    }
+
+
+    @PostMapping("/attr/relation")
+    public R addRelation(@RequestBody List<AttrGroupRelationVo> vos) {
+        relationService.saveBatch(vos);
+
+        return R.ok();
     }
 
 
