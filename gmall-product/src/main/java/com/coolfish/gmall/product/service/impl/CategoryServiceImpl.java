@@ -67,11 +67,11 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
     }
 
     /**
-     * 级联更新
+     * 级联更新 ,事务回滚需要完善
      *  @Transactional开启事务
      * @param category
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public void updateCascader(CategoryEntity category) {
         this.updateById(category);

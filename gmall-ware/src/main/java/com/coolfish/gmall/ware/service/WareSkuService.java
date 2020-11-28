@@ -11,10 +11,17 @@ import java.util.Map;
  *
  * @author coolfish
  * @email sunlightcs@gmail.com
- * @date 2020-11-03 09:22:16
+ * @date 2020-11-28 11:11:16
  */
 public interface WareSkuService extends IService<WareSkuEntity> {
 
     PageUtils queryPage(Map<String, Object> params);
+    /**
+     * 添加库存
+     * @param skuId
+     * @param wareId
+     * @param skuNum
+     */
+    void addStock(Long skuId, Long wareId, Integer skuNum);
 }
 

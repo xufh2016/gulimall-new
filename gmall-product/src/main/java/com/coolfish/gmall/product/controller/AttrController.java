@@ -1,8 +1,11 @@
 package com.coolfish.gmall.product.controller;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
+import com.coolfish.gmall.product.entity.ProductAttrValueEntity;
+import com.coolfish.gmall.product.service.ProductAttrValueService;
 import com.coolfish.gmall.product.vo.AttrRespVo;
 import com.coolfish.gmall.product.vo.AttrVo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +29,17 @@ import com.coolfish.common.utils.R;
 public class AttrController {
     @Autowired
     private AttrService attrService;
+
+    @Autowired
+    ProductAttrValueService productAttrValueService;
+
+    @GetMapping("/base/listforspu/{spuId}")
+    public R baseAttrList(@PathVariable("spuId") Long spuId) {
+
+        List<ProductAttrValueEntity> entities = productAttrValueService.baseAttrList(spuId);
+
+        return R.ok().put("data", entities);
+    }
 
     /**
      * 列表
@@ -70,6 +84,17 @@ public class AttrController {
     }
 
     /**
+     * 修改
+     */
+    @PostMapping("/update/{spuId}")
+    public R updateSpuAttr(@PathVariable("spuId") Long spuId,@RequestBody List<ProductAttrValueEntity> entities) {
+        productAttrValueService.updateSpuAttr(spuId,entities);
+
+
+        return R.ok();
+    }
+
+    /**
      * 删除
      */
     @RequestMapping("/delete")
@@ -81,7 +106,7 @@ public class AttrController {
 
     @GetMapping("/{attrType}/list/{catelogId}")
     public R baseAttrList(@RequestParam Map<String, Object> params, @PathVariable("catelogId") Long catelogId, @PathVariable("attrType") String attrType) {
-        PageUtils data = attrService.queryPage(params, catelogId,attrType);
+        PageUtils data = attrService.queryPage(params, catelogId, attrType);
         return R.ok().put("page", data);
     }
 

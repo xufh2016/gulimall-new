@@ -9,6 +9,7 @@ import com.coolfish.gmall.product.service.AttrAttrgroupRelationService;
 import com.coolfish.gmall.product.service.AttrService;
 import com.coolfish.gmall.product.service.CategoryService;
 import com.coolfish.gmall.product.vo.AttrGroupRelationVo;
+import com.coolfish.gmall.product.vo.AttrGroupWithAttrsVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -39,6 +40,12 @@ public class AttrGroupController {
 
     @Autowired
     AttrAttrgroupRelationService relationService;
+
+    @GetMapping("/{catelogId}/withattr")
+    public R getAttrGroupWithAttrs(@PathVariable("catelogId")Long catelogId) {
+        List<AttrGroupWithAttrsVo> vos = attrGroupService.getAttrGroupWithAttrsByCatelogId(catelogId);
+        return R.ok().put("data",vos);
+    }
 
     @PostMapping("/attr/relation/delete")
     public R deleteRelation(@RequestBody AttrGroupRelationVo[] vos) {

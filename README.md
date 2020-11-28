@@ -48,6 +48,7 @@
         }
     }
     ```
+4. 使用openfeign做远程调用时，方法签名可以不一致，但请求方式、返回值、请求路径必须一致，方法参数需要json模型一致
 ##nacos作为配置中心使用
 1. 引入spring-cloud-starter-alibaba-nacos-config依赖
 2. 创建一个bootstrap.properties文件，文件的名字是固定的，并在其中配置如下
@@ -530,7 +531,14 @@
 
 
 
-
+##Elasticsearch
+1. 是一个开源的分布式的搜索分析引擎。
+   + Index（索引）
+     动词：相当于mysql中的insert；作为动词相当于Mysql中的database
+   + Type（类型）
+     在Index中，可以定义一个或多个类型。类似于Mysql中的Table；每一种类型的数据放在一起
+   + Document
+     是json格式的，相当于mysql表中的一条数据
 
 
 
@@ -591,4 +599,12 @@
       <artifactId>spring-boot-configuration-processor</artifactId>
       <optional>true</optional>
    </dependency>
+   ```
+   
+#细节
+1. 统一的格式化时间，使用配置文件
+   ```yaml
+   spring:
+                                            jackson:
+                                              date-format: yyyy-MM-dd HH:mm:ss
    ```

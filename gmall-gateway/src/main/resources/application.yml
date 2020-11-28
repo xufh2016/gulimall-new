@@ -10,13 +10,6 @@ spring:
             - Path=/api/product/**
           filters:
             - RewritePath=/api/(?<segment>),/$\{segment}
-        - id: third_party_route
-          uri: lb://gmall-third-party
-          #          判断依据，也即是断言，如果是以api/product开头的请求就转发到gmall-product服务
-          predicates:
-            - Path=/api/thirdparty/**
-          filters:
-            - RewritePath=/api/thirdparty/(?<segment>),/$\{segment}
         - id: member_route
           uri: lb://gmall-member
           #          判断依据，也即是断言，如果是以api/product开头的请求就转发到gmall-product服务
@@ -24,6 +17,28 @@ spring:
             - Path=/api/member/**
           filters:
             - RewritePath=/api/(?<segment>),/$\{segment}
+        - id: coupon_route
+          uri: lb://gmall-coupon
+          #          判断依据，也即是断言，如果是以api/product开头的请求就转发到gmall-product服务
+          predicates:
+            - Path=/api/coupon/**
+          filters:
+            - RewritePath=/api/(?<segment>),/$\{segment}
+        - id: ware_route
+          uri: lb://gmall-ware
+          #          判断依据，也即是断言，如果是以api/product开头的请求就转发到gmall-product服务
+          predicates:
+            - Path=/api/ware/**
+          filters:
+            - RewritePath=/api/(?<segment>),/$\{segment}
+        - id: third_party_route
+          uri: lb://gmall-third-party
+          #          判断依据，也即是断言，如果是以api/product开头的请求就转发到gmall-product服务
+          predicates:
+            - Path=/api/thirdparty/**
+          filters:
+            - RewritePath=/api/thirdparty/(?<segment>),/$\{segment}
+
         - id: admin_route
           uri: lb://renren-fast
           predicates:
