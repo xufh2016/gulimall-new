@@ -1,4 +1,4 @@
-package com.coolfish.gmall.product.controller;
+package com.coolfish.gmall.product.app;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.coolfish.common.utils.PageUtils;

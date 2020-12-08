@@ -5,6 +5,8 @@ import com.coolfish.gmall.product.service.BrandService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 
 @SpringBootTest
 class GmallProductApplicationTests {
@@ -20,6 +22,17 @@ class GmallProductApplicationTests {
         brandService.save(brandEntity);
         System.out.println("保存成功");
 
+    }
+
+    @Autowired
+    StringRedisTemplate stringRedisTemplate;
+    @Test
+    public  void testRedis(){
+        ValueOperations<String, String> ops =
+                stringRedisTemplate.opsForValue();
+        ops.set("hello","worker");
+        String hello = ops.get("hello");
+        System.out.println(hello);
     }
 
   /*  @Test

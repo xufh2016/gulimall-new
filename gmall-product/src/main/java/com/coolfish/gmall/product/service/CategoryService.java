@@ -3,6 +3,7 @@ package com.coolfish.gmall.product.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.coolfish.common.utils.PageUtils;
 import com.coolfish.gmall.product.entity.CategoryEntity;
+import com.coolfish.gmall.product.vo.Catelog2Vo;
 
 import java.util.List;
 import java.util.Map;
@@ -25,5 +26,9 @@ public interface CategoryService extends IService<CategoryEntity> {
     Long[] findCatelogPath(Long catelogId);
 
     void updateCascader(CategoryEntity category);
+
+    List<CategoryEntity> getLevel1Category();
+
+    Map<String, List<Catelog2Vo>> getCatalogJson();
 }
 

@@ -1,14 +1,12 @@
 package com.coolfish.gmall.ware.controller;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
+import com.coolfish.gmall.ware.vo.SkuHasStockVo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.coolfish.gmall.ware.entity.WareSkuEntity;
 import com.coolfish.gmall.ware.service.WareSkuService;
@@ -79,6 +77,14 @@ public class WareSkuController {
 		wareSkuService.removeByIds(Arrays.asList(ids));
 
         return R.ok();
+    }
+    @PostMapping("/hasStock")
+    public R getSkuHasStock(@RequestBody List<Long> skuIds){
+
+      List<SkuHasStockVo> vos = wareSkuService.getSkuHasStock(skuIds);
+       /*  R ok = R.ok();
+        ok.setData(vos);*/
+        return R.ok().setData(vos);
     }
 
 }

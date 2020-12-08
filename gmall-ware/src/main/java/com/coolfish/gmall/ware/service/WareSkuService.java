@@ -3,7 +3,9 @@ package com.coolfish.gmall.ware.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.coolfish.common.utils.PageUtils;
 import com.coolfish.gmall.ware.entity.WareSkuEntity;
+import com.coolfish.gmall.ware.vo.SkuHasStockVo;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -23,5 +25,7 @@ public interface WareSkuService extends IService<WareSkuEntity> {
      * @param skuNum
      */
     void addStock(Long skuId, Long wareId, Integer skuNum);
+
+    List<SkuHasStockVo> getSkuHasStock(List<Long> skuIds);
 }
 

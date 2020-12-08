@@ -38,7 +38,12 @@ spring:
             - Path=/api/thirdparty/**
           filters:
             - RewritePath=/api/thirdparty/(?<segment>),/$\{segment}
-
+        - id: search_route
+          uri: lb://gmall-search
+          predicates:
+            - Path=/api/search/**
+          filters:
+            - RewritePath=/api/search/(?<segment>),/$\{segment}
         - id: admin_route
           uri: lb://renren-fast
           predicates:
@@ -46,3 +51,7 @@ spring:
           filters:
             - RewritePath=/api/(?<segment>),/renren-fast/$\{segment}
             ### 设置规则，所有前端项目都通过/api
+        - id: gmall_host_route
+          uri: lb://gmall-product
+          predicates:
+            - Host=**.gmall.com,gmall.com

@@ -1,4 +1,4 @@
-package com.coolfish.gmall.product.controller;
+package com.coolfish.gmall.product.app;
 
 import java.util.Arrays;
 import java.util.Map;

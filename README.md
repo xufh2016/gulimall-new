@@ -98,7 +98,7 @@
     + 只需要在bootstrap.properties说明加载配置中心中的哪些配置文件即可，配置中心中有的优先使用配置中心的
       在bootstrap.properties文件中用这个配置项即可
       ```properties
-       spring.cloud.nacos.config.ext-config[0].data-id=自定义的配置文件名
+      spring.cloud.nacos.config.ext-config[0].data-id=自定义的配置文件名
       ```  
       spring.cloud.nacos.config.ext-config是个集合List   
  6. 各个微服务中添加了配置中心的依赖以后，需要在资源文件中添加bootstrap.properties的配置文件，并配置相关的配置中心地址等相关信息
@@ -111,7 +111,7 @@
  3. 过滤器  
  * 需要注意的地方 熟悉gateway的路由和断言规则
  * 需要配置通用的跨域类或使用nginx做代理
-     ```java
+    ```java
     package com.coolfish.gmall.gateway.config;
     
     import org.springframework.context.annotation.Bean;
@@ -339,14 +339,14 @@
       
       /**
        * 集中处理所有异常
-       * 1、@ControllerAdvice(basePackages = "com.coolfish.gmall.product.controller") 用于指定给哪个包下的进行统一的异常处理
+       * 1、@ControllerAdvice(basePackages = "com.coolfish.gmall.product.app") 用于指定给哪个包下的进行统一的异常处理
        * 2、@ExceptionHandler用于告诉SpringMvc此异常处理类用于处理哪些异常，这些异常由@ExceptionHandler中的value值进行指定
        *    例如：@ExceptionHandler(value = MethodArgumentNotValidException.class)
        * 3、@RestControllerAdvice = @ControllerAdvice + @ResponseBody
        * 4、通过异常对象获取BindingResult，异常内容都在BindingResult中。
        */
       @Slf4j
-      @RestControllerAdvice(basePackages = "com.coolfish.gmall.product.controller")
+      @RestControllerAdvice(basePackages = "com.coolfish.gmall.product.app")
       public class GMallExceptionControllerAdvice {
       
           @ExceptionHandler(value = MethodArgumentNotValidException.class)
@@ -532,18 +532,290 @@
 
 
 ##Elasticsearch
-1. 是一个开源的分布式的搜索分析引擎。
+1. 是一个开源的分布式的搜索分析引擎。可以这样理解，ES中的Index对应Mysql中的database，Type对应Mysql中的Table，
+   Document对应Mysql表中的一条一条记录
    + Index（索引）
      动词：相当于mysql中的insert；作为动词相当于Mysql中的database
    + Type（类型）
      在Index中，可以定义一个或多个类型。类似于Mysql中的Table；每一种类型的数据放在一起
    + Document
-     是json格式的，相当于mysql表中的一条数据
+     是json格式的，相当于mysql表中的一条数据,ES中不存在列，只有属性和值，属性就是mysql中的列名。
+2. 概念
+   + 倒排索引
+   
+3. 安装，使用docker安装
+   + docker pull elasticsearch:7.4.2           存储和检索数据
+   + docker pull kibana:7.4.2                  可视化检索数据
+   + docker update 容器Id --restart=always     设置容器自动启动
+   + 基于docker的安装步骤：
+      1. mkdir -p /mydata/elasticsearch/config
+      2. mkdir -p /mydata/elasticsearch/data
+      3. echo "http.host:0.0.0.0">>/mydata/elasticsearch/config/elasticsearch.yml
+      4. docker run --name gmallES -p9200:9200 -p 9300:9300\
+         -e "discovery.type=single-node"\
+         -e ES_JAVA_OPTS="-Xms64m -Xmx128m"\
+         -v /mydata/elasticsearch/config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml\
+         -v /mydata/elasticsearch/data:/usr/share/elasticsearch/data\
+         -v /mydata/elasticsearch/plugins:/usr/share/elasticsearch/plugins\
+         -d elasticsearch:7.4.2
+      5. docker logs 查日志 例如docker logs elasticsearch，表示查看es的日志
+         chmod -R 777 /mydata/elasticsearch/
+      6. 启动容器 docker start 容器Id
+      7. **出错**,上述创建过程会出现错误将elasticsearch.yml变为文件夹，因此需要执行下面操作。
+         ```shell script
+         drwxr-xr-x. 2 root root 6 Oct 26 14:07 elasticsearch.yml
+         [root@localhost config]# rm -r elasticsearch.yml/
+         rm: remove directory ‘elasticsearch.yml/’? y
+         [root@localhost config]# touch elasticsearch.yml
+         [root@localhost config]# ls -l
+         total 0
+         -rw-r--r--. 1 root root 0 Oct 26 14:24 elasticsearch.yml
+         ```
+   + 安装kibana
+     1. docker run --name kibana -e ELASTICSEARCH_HOSTS=http://192.168.0.84:9200 -p 5601:5601 -d kibana:7.4.2
+
+4. 本项目中，ES中的数据来源于Mysql，需要给ES存储一份Mysql中的数据
+
+5. 初步检索
+   1. _cat 用于查看es的相关信息
+      + GET /_cat/nodes: 查看所有节点
+      + GET /_cat/health: 查看es健康状况
+      + GET /_cat/master: 查看主节点
+      + GET /_cat/indices: 查看所有索引
+   2. 索引一个文档（保存）
+      + 保存一个数据，保存在哪个索引的哪个类型下，指定用哪个唯一标识
+      + PUT customer/external/1
+      + POST和PUT都是新增和修改二合一。PUT请求必须要带id；
+      + POST请求可以不带，不带的情况下时新增，带的情况下如果有id则更新，没有则新增一次，id不变下次请求为更新。
+   3. 更新文档
+      + 带_update会对比原数据，如果没有变化则noop（no operation）
+      + 不带_update，则会不断的进行更新并叠加版本等 
+6. 进阶高级用法
+   1. SearchApi
+      + ES支持两种基本方式检索：
+        + 一个是通过使用Rest request URI发送搜索参数（uri+检索参数）
+        + 另一个是通过使用Rest request body来发送它们（uri+请求体） 
+   2. QueryDsl
+   3. term和match
+      https://www.jianshu.com/p/d5583dff4157
+   4. aggregations执行聚合  
+      聚合提供了从数据中分组和提取数据的能力。最简单的聚合方法大致等于Sql中的group by和sql聚合函数。在ES中，有执行搜索返回hits，
+      并且同事返回聚合结果，把一个响应中的所有hits分隔开的能力。
+7. 分词（中文分词使用IK分词器）安装在elasticsearch目录下的plugins文件夹中（需要将ik分词器解压到ik文件夹下），  
+   需要注意的点是ik分词器的版本要和elasticsearch的版本一一对应
+   
 
 
 
 
 
+
+##搭建域名访问环境
+1. 安装nginx
+   + 随便启动一个nginx实例，只是为了复制出配置
+     + docker run -p 80:80 --name mynginx -d nginx:1.10
+   + 将容器内的配置文件拷贝到当前目录：docker container cp nginx:/etc/nginx .
+     + 千万别忘记后面的" ."
+   + 修改文件名称：mv nginx conf 把这个conf移动到/mydata/nginx下
+   + 终止原容器：docker stop nginx
+   + 执行命令删除原容器：docker rm 容器Id
+   + 创建新的nginx；执行以下命令
+     docker run -p 80:80 --name mynginx\
+     -v /mydata/nginx/html:/usr/share/nginx/html\
+     -v /mydata/nginx/logs:/var/log/nginx\
+     -v /mydata/nginx/conf:/etc/nginx\
+     -d nginx:1.10
+   + 在做数据卷挂载的时候会自动将html、logs文件夹创建好。     
+    ```xml
+    <?xml version="1.0" encoding="UTF-8"?>
+    <!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+    <properties>
+            <comment>IK Analyzer 扩展配置</comment>
+            <!--用户可以在这里配置自己的扩展字典 -->
+            <entry key="ext_dict"></entry>
+             <!--用户可以在这里配置自己的扩展停止词字典-->
+             <entry key="ext_stopwords"></entry>
+            <!--用户可以在这里配置远程扩展字典 -->
+            <entry key="remote_ext_dict">http://192.168.0.84/es/fenci.txt</entry>
+            <!--用户可以在这里配置远程扩展停止词字典-->
+            <!-- <entry key="remote_ext_stopwords">words_location</entry> -->
+    </properties>
+    ```
+    + 设置重启,docker 容器随系统自动重启
+    ```shell script
+    docker update mynginx --restart=always
+    ```
+2. 正向代理、反向代理
+   + 让nginx进行反向代理，将所有来自gmall.com的请求，都转到商品服务。
+     
+   
+
+
+##压力测试
+1. hps： 每秒点击数（hits per second）,单位是次/秒
+2. tps： 系统每秒处理交易数，单位是笔/秒（transaction per second）
+3. qps： 系统每秒处理查询次数，单位是次/秒（query per second）
+4. 无论tps、qps、hps，此项指标是衡量系统处理能力非常重要的指标，越大越好，根据经验，一般情况：
+   + 金融行业： 1000tps~50000tps，不包括互联网化的活动，如秒杀等
+   + 保险行业： 100tps~100000tps，不包括互联网化的活动
+   + 制造行业： 10tps~5000tps
+   + 互联网电子商务： 10000tps~1000000tps
+   + 互联网中型网站： 1000tps~50000tps
+   + 互联网小型网站： 500tps~10000tps
+5. 从外部看，性能测试主要关注如下三个指标
+   + 吞吐量： 每秒钟系统能够处理的请求数、任务数
+   + 响应时间： 服务处理一个请求或一个任务的耗时
+   + 错误率： 一批请求中结果出错的请求所占比例   
+   
+6. JVM调节
+   + -Xmx1024m(最大可用内存)  -Xms1024(初始内存大小)  -Xmn512m(eden区大小，新生代)   
+   
+   
+   
+###JMeter报错
+####JMeter Address Already in use
+win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端口为1024~5000，并且要四分钟来循环回收他们，这样就导致我们在短时间内跑大  
+量的请求时将端口沾满了
+1. cmd中，用regedit命令打开注册表
+2. 在HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Tcpic\Parameters下，
+   + 右击parameters，添加一个新的DWORD，名字为MaxUserPort
+   + 然后双击MaxUserPort，输入数值数据为65534，基数选择十进制（如果是分布式运行的话，控制机器和负载机器都需要这样操作）
+   + 修改配置完毕后记得重启机器才能生效
+     TCPTimedWaitDelay: 30
+
+
+
+##缓存与分布式缓存
+
+1. 哪些数据适合放入缓存？
+   + 即时性、数据一致性要求不高的
+   + 访问量大且更新频率不高的数据（读多，写少）
+2. 缓存的使用
+   1. 可以使用本机缓存即Map，单机可以，对分布式系统是不可以的；分布式系统中，需要各个微服务去共享一个缓存中间件（例如redis）
+3. 安装redis，使用docker进行安装
+   ```shell script
+   docker pull redis
+   mkdir -p /mydata/redis/conf
+   touch /mydata/redis/conf/redis.conf
+   
+   docker run -p 6379:6379 --name gmallredis -v /mydata/redis/data:/data\
+   -v /mydata/redis/conf/redis.conf:/etc/redis/redis.conf\
+   -d redis redis-server /etc/redis/redis.conf
+   ```
+4. springboot整合redis
+   ```yaml
+   spring:
+     redis:
+       host: 192.168.0.84
+       port: 6379
+   ```
+   ```xml
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-data-redis</artifactId>
+    </dependency>
+   ```
+   使用springboot自动配置好的RedisTemplate<Object,Object>或StringRedisTemplate来操作redis  
+   无论使用的是lettuce还是jedis客户端作为redis底层的客户端，springboot都进行了重新封装即RedisTemplate<Object,Object>
+    和StringRedisTemplate
+5. redis报错redisexception io.netty.util.internal.OutOfDirectMemoryError
+   ```java
+    //springboot 2.0以后默认使用的是lettuce作为操作redis的客户端。它使用netty进行网络通信。lettuce的bug导致堆外内存溢出。
+    //netty如果没有指定堆外内存，就会默认使用在jvm设置中的-Xmx128m，可以通过-Dio.netty.maxDirectMemory进行设置
+    //解决方案，不能使用-Dio.netty.maxDirectMemory来调大堆外内存
+    //1、升级lettuce客户端。2、切换使用jedis客户端
+   ```
+   可以这样修改，使用jedis客户端。
+   ```xml
+   <dependency>
+     <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-data-redis</artifactId>
+        <exclusions>
+            <exclusion>
+                <groupId>io.lettcue</groupId>
+                <artifactId>lettuce-core</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
+    <dependency>
+        <groupId>redis.clients</groupId>
+        <artifactId>jedis</artifactId>
+    </dependency>
+   ```
+   使用redis缓存。要注意查数据库与存缓存要保持原子性。
+6. 使用redis有可能产生的问题
+   + 缓存穿透
+     指查询一个一定不存在的数据，由于缓存是不命中的，将去查询数据库，但数据库也无此记录，我们没有将这次查询的null写入缓存，这将导致
+     这个不存在的数据每次请求都要到存储层去查询，失去了缓存的意义。  
+     风险：利用不存在的数据进行攻击，数据库瞬时压力增大，最终导致崩溃。  
+     解决：null结果缓存，并加入短暂过期时间，比如几分钟后过期
+   
+   + 缓存雪崩
+     缓存雪崩是指在我们设置缓存时key采用了相同的过期时间，导致缓存在某一时刻同时失效，请求全部转发到DB，DB瞬时压力过重雪崩。  
+     解决：原有的失效时间基础上增加一个随机值，比如1~5分钟随机，这样每个缓存的过期时间的重复率就会降低，就较难引发集体失效的事件。
+   
+   + 缓存击穿
+     - 对于一些设置了过期时间的key，如果这些key可能会在某些时间点被超高并发的访问，是一种非常热点的数据。
+     - 如果这个key在大量请求同时进来前正好失效，那么所有对这个key的数据查询都落到了db，我们称之为缓存击穿  
+     解决：加锁，大量并发只让一个去查，其他人等待，查到以后释放锁，其他人获取到锁，先查缓存，就会有数据，不用去db。
+7. 分布式锁
+   + 第一种方式
+    ```java
+        public Map<String, List<Catelog2Vo>> getCatalogJsonFromDbWithRedisLock() {
+            //1、占分布式锁setIfAbsent就是redis中的setNX命令
+            String uuid = UUID.randomUUID().toString();
+            //这样是原子操作，redis底层是这样做的：setnxex
+            Boolean lock = stringRedisTemplate.opsForValue().setIfAbsent("lock", uuid, 300, TimeUnit.SECONDS);
+            Map<String, List<Catelog2Vo>> stringListMap = null;
+            if (lock) {
+                //设置过期时间，这样也是有缺陷的，这是非原子性的。stringRedisTemplate.expire("lock",30,TimeUnit.SECONDS);
+                //加锁成功,执行业务
+                try {
+                    stringListMap = getStringListMap();
+                } finally {
+                    String lua_scripts = "if redis.call(\"get\",KEYS[1]) == ARGV[1] then\n" +
+                            "    return redis.call(\"del\",KEYS[1])\n" +
+                            "else\n" +
+                            "    return 0\n" +
+                            "end";
+                    Long lock2 = stringRedisTemplate.execute(new DefaultRedisScript<Long>(lua_scripts, Long.class), Arrays.asList("lock"), uuid);
+                }
+                //执行成功以后需要释放锁。
+                //删除分布式锁的时候需要判断是不是自己的锁，是自己的锁才可以删除。但这样依然是有问题的，这样是非原子性操作
+                //获取lock的值和对比成功删除也需要原子操作可以使用lua脚本
+                //String lock1 = stringRedisTemplate.opsForValue().get("lock");
+                /*if (uuid.equals(lock1)){
+                    stringRedisTemplate.delete("lock");
+                }*/
+                return stringListMap;
+            } else {//加锁失败，重试,相当于自旋的方式进行重试。
+                //可以休眠一段时间再重试
+                return getCatalogJsonFromDbWithRedisLock();
+            }
+        }
+    ```
+   
+8. java中的各种锁
+   + 锁的分类介绍  
+     乐观锁和悲观锁:锁的一种宏观分类是乐观锁和悲观锁。乐观锁与悲观锁并不是特定的指哪个锁（java中没有那个具体锁的实现名就叫乐观锁
+     或悲观锁），而是在并发情况下的两种不同的策略。
+     1. 乐观锁（Optimistic Lock）就是很乐观，每次去拿数据的时候都认为别人不会修改。所以不会上锁。但是如果想要更新数据，则会**更
+     新之前检查在读取至更新这段时间别人没有修改过这个数据**，如果修改过，则重新读取，再次尝试更新，循环上去步骤直到更新成功（当然
+     也允许更新失败的线程放弃更新操作）。
+     
+     2. 悲观锁（Pessimistic Lock）就是很悲观，每次去拿数据的时候都认为别人会修改。所以每次都在拿数据的时候上锁。这样别人拿数据
+     的时候就会被挡住，直到悲观锁释放，想获取数据的线程再去获取锁，然后再获取数据  
+     **悲观锁阻塞事务，乐观锁回滚重试**，他们各有优缺点，没有好坏之分，只有适应的场景的不同区别。**乐观锁适合写比较少，冲突很少
+     发生的场景；而写多的场景适合使用悲观锁**
+   + 乐观锁的基础 --- CAS
+     什么是CAS? Compare-and-Swap,即比较并替换，或者比较并设置
+     1. 比较：读取到一个值A，在将其更新为B之前，检查原值是否为A（未被其他线程修改过，这里忽略ABA问题）。
+     2. 替换：如果是，更新A为B，结束。如果不是，则不会更新。  
+   + 自旋锁
+     1. synchronized与Lock interface  
+        Java中两种实现加锁的方式：一种是使用synchronized关键字，另一种是使用Lock接口的实现类。synchronized更像是自动挡，而lock
+        及实现类则更像手动挡。
+     
 #FastDFS
 
 ##linux
@@ -605,6 +877,50 @@
 1. 统一的格式化时间，使用配置文件
    ```yaml
    spring:
-                                            jackson:
-                                              date-format: yyyy-MM-dd HH:mm:ss
+     jackson:
+       date-format: yyyy-MM-dd HH:mm:ss
    ```
+   
+2. 去除数据源依赖
+   ```xml
+   <dependency>
+       <groupId>com.coolfish.gmall</groupId>
+       <artifactId>gmall-common</artifactId>
+       <version>0.0.1-SNAPSHOT</version>
+       <exclusions>
+           <exclusion>
+               <groupId>mysql</groupId>
+               <artifactId>mysql-connector-java</artifactId>
+           </exclusion>
+           <exclusion>
+               <groupId>com.baomidou</groupId>
+               <artifactId>mybatis-plus-boot-starter</artifactId>
+           </exclusion>
+       </exclusions>
+   </dependency>
+   ```
+   或使用注解@SpringBootApplication中的属性exclude标识(exclude = DataSourceAutoConfiguration.class)
+   ```java
+   package com.coolfish.gmall.search;
+   
+   import org.springframework.boot.SpringApplication;
+   import org.springframework.boot.autoconfigure.SpringBootApplication;
+   import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+   import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+   import javax.sql.DataSource;
+   
+   @SpringBootApplication(exclude = DataSourceAutoConfiguration.class)
+   @EnableDiscoveryClient
+   public class GmallSearchApplication {
+   
+       public static void main(String[] args) {
+           SpringApplication.run(GmallSearchApplication.class, args);
+       }
+   
+   }
+   ```
+ 3. Java语法
+    **new TypeReference<List<SkuHasStockVo>>()由于TypeReference的构造方法是protected的访问权限，因此需要在new TypeReference<List<SkuHasStockVo>>()后面加上“{}”**
+    ```java
+    TypeReference<List<SkuHasStockVo>> listTypeReference = new TypeReference<List<SkuHasStockVo>>(){};
+    ```

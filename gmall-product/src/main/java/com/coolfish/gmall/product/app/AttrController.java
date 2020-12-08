@@ -1,4 +1,4 @@
-package com.coolfish.gmall.product.controller;
+package com.coolfish.gmall.product.app;
 
 import java.util.Arrays;
 import java.util.List;
@@ -11,7 +11,6 @@ import com.coolfish.gmall.product.vo.AttrVo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import com.coolfish.gmall.product.entity.AttrEntity;
 import com.coolfish.gmall.product.service.AttrService;
 import com.coolfish.common.utils.PageUtils;
 import com.coolfish.common.utils.R;

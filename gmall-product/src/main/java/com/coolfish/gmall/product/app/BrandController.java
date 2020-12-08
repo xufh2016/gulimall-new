@@ -1,14 +1,10 @@
-package com.coolfish.gmall.product.controller;
+package com.coolfish.gmall.product.app;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 
-import com.baomidou.mybatisplus.core.toolkit.BeanUtils;
 import com.coolfish.common.valid.AddGroup;
-import com.fasterxml.jackson.databind.util.BeanUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,9 +16,6 @@ import com.coolfish.gmall.product.entity.BrandEntity;
 import com.coolfish.gmall.product.service.BrandService;
 import com.coolfish.common.utils.PageUtils;
 import com.coolfish.common.utils.R;
-
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
 
 
 /**
