@@ -17,6 +17,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
@@ -96,6 +97,8 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
         //stringRedisTemplate.delete("cateLogJsonLock");
     }
 
+    //每一个需要缓存的数据都要来指定放到哪个名字的缓存中（亦即缓存分区-->推荐按照业务类型分）
+    @Cacheable({"category"}) //表示当前方法的执行结果需要被缓存，如果缓存中有，方法不用调用，如果缓存中没有，则执行方法，最后将方法的执行结果放入缓存
     @Override
     public List<CategoryEntity> getLevel1Category() {
         List<CategoryEntity> categoryEntities = baseMapper.selectList(new QueryWrapper<CategoryEntity>().eq("parent_cid", 0));

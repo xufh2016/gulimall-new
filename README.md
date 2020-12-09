@@ -879,18 +879,43 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
      
 ##Spring Cache
 1. 简介
-   + Spring从3.1开始定义了Cach和CachManager接口来统一不同的缓存技术；并支持使用JCach（JSR-107）注解简化我们开发；
-   + Cache接口为缓存的组件规范定义，包含缓存的各种操作集合；Cach接口下Spring提供了各种xxxCache的实现，如：RedisCache、
+   + Spring从3.1开始定义了Cache和CacheManager接口来统一不同的缓存技术；并支持使用JCache（JSR-107）注解简化我们开发；
+   + Cache接口为缓存的组件规范定义，包含缓存的各种操作集合；Cache接口下Spring提供了各种xxxCache的实现，如：RedisCache、
      EhCache、ConcurrentMapCache等。
    + 每次调用需要缓存功能的方法时，Spring会检查指定参数的指定目标方法是否已经被调用过；如果有就直接从缓存中读取方法调用后的结果，
      如果没有就调用方法并缓存结果后返回给用户。下次调用直接从缓存中读取
    + 使用Spring缓存抽象时我们需要关注以下两点
      1. 确定方法需要被缓存及他们的缓存策略
      2. 从缓存中读取之前缓存存储的数据
-
-
-
-
+2. 整合Spring Cache
+   1. 引入依赖
+   ```xml
+    <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-cache</artifactId>
+    </dependency>
+   ```
+   2. 引入redis开发场景
+   3. 写配置
+      ```properties
+       spring.cache.type=redis
+       #spring.cache.cache-names=
+      ```
+   4. 使用缓存
+      + 开启缓存功能，在启动类上配置
+        ```java
+        @EnableCaching
+        ```
+      + 使用注解
+   5. 默认行为
+      1. 如果缓存中有，方法不再调用
+      2. key默认自动生成，缓存的名字：SimpleKey[](自助生成的key)
+      3. 缓存的value值。默认使用jdk序列化机制。将序列化后的数据存到redis
+      4. 默认ttl时间为-1（及永不过期，这样是不符合规范的），希望要有过期时间
+   6. 自定义
+      1. 指定生成的缓存使用的key
+      2. 指定缓存的数据的存活时间ttl
+      3. 将数据保存为json格式
 
 
 
@@ -1035,3 +1060,5 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
    skip-character-set-client-handshake
    skip-name-resolve
    ```
+5. ApplicationRunner接口和CommandLineRunner接口
+   + 作用：实现系统启动完后做一些系统初始化的操作。
