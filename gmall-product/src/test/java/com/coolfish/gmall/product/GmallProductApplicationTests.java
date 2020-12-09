@@ -3,6 +3,7 @@ package com.coolfish.gmall.product;
 import com.coolfish.gmall.product.entity.BrandEntity;
 import com.coolfish.gmall.product.service.BrandService;
 import org.junit.jupiter.api.Test;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -33,6 +34,12 @@ class GmallProductApplicationTests {
         ops.set("hello","worker");
         String hello = ops.get("hello");
         System.out.println(hello);
+    }
+    @Autowired
+    RedissonClient redissonClient;
+    @Test
+    public void TestRedisson(){
+        System.out.println(redissonClient);
     }
 
   /*  @Test

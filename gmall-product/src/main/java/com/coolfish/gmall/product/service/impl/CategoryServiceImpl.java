@@ -14,6 +14,8 @@ import com.coolfish.gmall.product.service.CategoryBrandRelationService;
 import com.coolfish.gmall.product.service.CategoryService;
 import com.coolfish.gmall.product.vo.Catelog2Vo;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -36,6 +38,9 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
 
     @Autowired
     StringRedisTemplate stringRedisTemplate;
+
+    @Autowired
+    RedissonClient redissonClient;
 
     @Override
     public PageUtils queryPage(Map<String, Object> params) {
@@ -87,6 +92,8 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
     public void updateCascader(CategoryEntity category) {
         this.updateById(category);
         categoryBrandRelationService.updateCategory(category.getCatId(), category.getName());
+        //例如此处菜单有更新以后可以删除缓存中的数据， stringRedisTemplate.delete("cateLogJsonLock");
+        //stringRedisTemplate.delete("cateLogJsonLock");
     }
 
     @Override
@@ -164,6 +171,29 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
             }
             return getCatalogJsonFromDbWithRedisLock();
         }
+    }
+
+    /**
+     * 缓存里面的数据如何和数据库保持一直
+     * 缓存数据一致性
+     * 1、双写模式
+     * 2、失效模式
+     *
+     * @return
+     */
+    public Map<String, List<Catelog2Vo>> getCatalogJsonFromDbWithRedissonLock() {
+        //1、占分布式锁setIfAbsent就是redis中的setNX命令
+        //这样是原子操作，redis底层是这样做的：setnxex
+        Map<String, List<Catelog2Vo>> stringListMap = null;
+        //加锁成功,执行业务
+        RLock lock = redissonClient.getLock("cateLogJsonLock");
+        lock.lock();
+        try {
+            stringListMap = getStringListMap();
+        } finally {
+            lock.unlock();
+        }
+        return stringListMap;
     }
 
     private Map<String, List<Catelog2Vo>> getStringListMap() {

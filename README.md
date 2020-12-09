@@ -796,6 +796,8 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
     ```
    
 8. java中的各种锁
+   + synchronized和juc包下的如reentrantlock、读锁、写锁、读写锁、countdownlatch（闭锁）、semaphore（信号量）等都是本地锁，不
+     适应于分布式系统中
    + 锁的分类介绍  
      乐观锁和悲观锁:锁的一种宏观分类是乐观锁和悲观锁。乐观锁与悲观锁并不是特定的指哪个锁（java中没有那个具体锁的实现名就叫乐观锁
      或悲观锁），而是在并发情况下的两种不同的策略。
@@ -815,7 +817,84 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
      1. synchronized与Lock interface  
         Java中两种实现加锁的方式：一种是使用synchronized关键字，另一种是使用Lock接口的实现类。synchronized更像是自动挡，而lock
         及实现类则更像手动挡。
+
+
+9. 整合redisson作为分布式锁等功能框架     
+   + 引入依赖
+   ```xml
+    <dependency>
+        <groupId>org.redisson</groupId>
+        <artifactId>redisson</artifactId>
+        <version>3.12.0</version>
+    </dependency>
+   ```
+   + 配置redisson(此处配置的是单节点)，注意**setAddress("redis://192.168.0.84:6379")，此处必须加redis://**
+   ```java
+    import org.redisson.Redisson;
+    import org.redisson.api.RedissonClient;
+    import org.redisson.config.Config;
+    import org.springframework.context.annotation.Bean;
+    import org.springframework.context.annotation.Configuration;
+    
+    import java.io.IOException;
+    
+    @Configuration
+    public class GmallRedissonConfig {
+        /**
+         * 所有对redisson的使用都是通过RedissonClient对象
+         * 这种方式是创建一个单节点的redissonclient
+         * @return
+         * @throws IOException
+         */
+        // java.lang.IllegalArgumentException: Redis url should start with redis:// or rediss:// (for SSL connection)
+        @Bean(destroyMethod = "shutdown")
+        RedissonClient redisson() throws IOException {
+            Config config = new Config();
+            config.useSingleServer().setAddress("redis://192.168.0.84:6379");
+            return Redisson.create(config);
+        }
+    }
+   ```
+   Redisson解决了1、自动续期，如果业务超长，运行期间自动给锁续期上新的30s。不用担心业务时间长，锁自动过期被删除；  
+   2、加锁的业务只要运行完成，就不会给当前锁续期，即使不手动解锁，锁默认在30s以后自动删除；3、有一个看门狗机制。4、自动解锁时间
+   一定要大于业务的执行时间。5、在手动设置锁的过期时间的时候是不使用看门狗机制的  
+   + 问题：lock.lock(10,TimeUnit.SECONDS);在锁时间到了以后，不会自动续期。
+     1. 如果我们传递了锁的超时时间，就发送给redis执行脚本，进行占锁，默认超时就是我们指定的时间
+     2. 如我们未指定锁的超时时间，就使用30*1000【LockWatchdogTimeOut看门狗的默认时间】；只要占锁成功，就会启动一个定时任务【
+     重新给锁设置时间，新的过期时间就是看门狗的默认时间】，每隔10都会自动internaLockLeaseTime【看门狗时间】
+   + 最佳实战：
+     lock.lock(30,TimeUnit.SECONDS);//给的时间长点
+   + 缓存数据一致性解决方案
+     无论是双写模式还是失效模式，都会导致缓存的不一致问题。即多个实例同时更新会出事。
+     + 如果是用户维度数据（订单数据、用户数据），这种并发几率非常小，不用考虑这个问题，缓存数据加上过期时间，每隔一段时间触发读的
+       主动更新即可。
+     + 如果是菜单，商品介绍等基础数据，也可以去使用canal订阅binlog的方式。
+     + 缓存数据+过期时间也足够解决大部分业务对于缓存的要求。
+     + 通过加锁保证并发读写，写写的时候按顺序排好队。读读无所谓。所以适合使用读写锁。（业务不关心脏数据，允许临时脏数据可忽略）
+   + 总结
+     + 我们能放入缓存的数据本就不应该是实时性，一致性要求很高的。所以缓存数据的时候加上过期时间，保证每天拿到当前最新数据即可
+     + 不应该过度设计，增加系统的复杂性
+     + 遇到实时性、一致性要求高的数据，就应该查数据库，即使慢点。
      
+     
+##Spring Cache
+1. 简介
+   + Spring从3.1开始定义了Cach和CachManager接口来统一不同的缓存技术；并支持使用JCach（JSR-107）注解简化我们开发；
+   + Cache接口为缓存的组件规范定义，包含缓存的各种操作集合；Cach接口下Spring提供了各种xxxCache的实现，如：RedisCache、
+     EhCache、ConcurrentMapCache等。
+   + 每次调用需要缓存功能的方法时，Spring会检查指定参数的指定目标方法是否已经被调用过；如果有就直接从缓存中读取方法调用后的结果，
+     如果没有就调用方法并缓存结果后返回给用户。下次调用直接从缓存中读取
+   + 使用Spring缓存抽象时我们需要关注以下两点
+     1. 确定方法需要被缓存及他们的缓存策略
+     2. 从缓存中读取之前缓存存储的数据
+
+
+
+
+
+
+
+
 #FastDFS
 
 ##linux
@@ -919,8 +998,40 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
    
    }
    ```
- 3. Java语法
+3. Java语法
     **new TypeReference<List<SkuHasStockVo>>()由于TypeReference的构造方法是protected的访问权限，因此需要在new TypeReference<List<SkuHasStockVo>>()后面加上“{}”**
     ```java
     TypeReference<List<SkuHasStockVo>> listTypeReference = new TypeReference<List<SkuHasStockVo>>(){};
     ```
+4. docker 安装mysql
+    ```shell script
+    docker run -p 3306:3306 --name gmall_mysql\
+    -v /mydata/mysql/log:/var/log/mysql\
+    -v /mydata/mysql/data:/var/lib/mysql\
+    -v /mydata/mysql/conf:/etc/mysql\
+    -e MYSQL_ROOT_PASSWORD=root\
+    -d mysql:5.7
+   ```
+   ```shell script
+   docker exec -it gmall_mysql /bin/bash
+   ```
+   其中-e MYSQL_ROOT_PASSWORD=root是初始化root用户的密码
+   ```shell script
+   vi /mydata/mysql/conf/my.cnf
+   ```
+   做如下修改
+   ```config
+   [client]
+   default-character-set=utf8
+   
+   [mysql]
+   default-character-set=utf8
+   
+   [mysqld]
+   init_connect='SET collation_connection=utf8_unicode_ci'
+   init_connect='SET NAMES utf8'
+   character-set-server=utf8
+   collation-server=utf8_uncode_ci
+   skip-character-set-client-handshake
+   skip-name-resolve
+   ```
