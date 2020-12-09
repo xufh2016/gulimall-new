@@ -914,10 +914,85 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
       4. 默认ttl时间为-1（及永不过期，这样是不符合规范的），希望要有过期时间
    6. 自定义
       1. 指定生成的缓存使用的key
-      2. 指定缓存的数据的存活时间ttl
-      3. 将数据保存为json格式
-
-
+         ```java
+         //每一个需要缓存的数据都要来指定放到哪个名字的缓存中（亦即缓存分区-->推荐按照业务类型分）
+         @Cacheable(value = {"category"},key = "'level1Categroies'") //表示当前方法的执行结果需要被缓存，如果缓存中有，方法不用调用，如果缓存中没有，则执行方法，最后将方法的执行结果放入缓存
+         @Override
+         public List<CategoryEntity> getLevel1Category() {
+             List<CategoryEntity> categoryEntities = baseMapper.selectList(new QueryWrapper<CategoryEntity>().eq("parent_cid", 0));
+             return categoryEntities;
+         }
+         ```
+      2. 指定缓存的数据的存活时间ttl(在配置文件中修改ttl,是以毫秒为单位的)
+         ```properties
+         spring.cache.redis.time-to-live=3600000
+         ```
+      3. 将数据保存为json格式（需要自定义缓存管理器）
+         + CacheAutoConfiguration->RedisCacheConfiguration->自动配置了RedisCacheManager->初始化所有的缓存->每个缓存决定使用
+           什么配置->如果redisCacheConfiguration有就用已有的，没有就使用默认配置->想改缓存的配置，只需要给容器中放一个RedisCacheConfiguration
+           即可->就会应用到当前RedisCacheManager管理的所有缓存分区中。
+           ```java
+           package com.coolfish.gmall.product.config;
+           
+           import com.alibaba.fastjson.support.spring.GenericFastJsonRedisSerializer;
+           import org.springframework.beans.factory.annotation.Autowired;
+           import org.springframework.boot.autoconfigure.cache.CacheProperties;
+           import org.springframework.boot.context.properties.EnableConfigurationProperties;
+           import org.springframework.cache.annotation.EnableCaching;
+           import org.springframework.context.annotation.Bean;
+           import org.springframework.context.annotation.Configuration;
+           import org.springframework.data.redis.cache.RedisCacheConfiguration;
+           import org.springframework.data.redis.serializer.RedisSerializationContext;
+           import org.springframework.data.redis.serializer.StringRedisSerializer;
+           
+           @EnableConfigurationProperties(CacheProperties.class)
+           @Configuration
+           @EnableCaching
+           public class GmallCacheConfig {
+               @Autowired
+               CacheProperties cacheProperties;
+               @Bean
+               RedisCacheConfiguration redisCacheConfiguration() {
+                   RedisCacheConfiguration redisCacheConfiguration = RedisCacheConfiguration.defaultCacheConfig();
+                   //redisCacheConfiguration = redisCacheConfiguration.entryTtl();
+                   redisCacheConfiguration = redisCacheConfiguration.serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()));
+                   redisCacheConfiguration = redisCacheConfiguration.serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericFastJsonRedisSerializer()));
+                   //将配置文件中的所有配置都生效
+                   CacheProperties.Redis redisProperties = cacheProperties.getRedis();
+                   if (redisProperties.getTimeToLive() != null) {
+                       redisCacheConfiguration = redisCacheConfiguration.entryTtl(redisProperties.getTimeToLive());
+                   }
+                   if (redisProperties.getKeyPrefix() != null) {
+                       redisCacheConfiguration = redisCacheConfiguration.prefixKeysWith(redisProperties.getKeyPrefix());
+                   }
+                   if (!redisProperties.isCacheNullValues()) {
+                       redisCacheConfiguration = redisCacheConfiguration.disableCachingNullValues();
+                   }
+                   if (!redisProperties.isUseKeyPrefix()) {
+                       redisCacheConfiguration = redisCacheConfiguration.disableKeyPrefix();
+                   }
+                   return redisCacheConfiguration;
+               }
+           }
+           ```
+           ```java
+           /**
+            * 级联更新 ,事务回滚需要完善
+            * @ @CacheEvict:失效模式 key = "'level1Categroies'"是spel表达式，常量一定要加**单引号**
+            * @param category
+            * @Transactional开启事务
+            */
+           @CacheEvict(value = "category",key = "'level1Categroies'")
+           @Transactional(rollbackFor = Exception.class)
+           @Override
+           public void updateCascader(CategoryEntity category) {
+               this.updateById(category);
+               categoryBrandRelationService.updateCategory(category.getCatId(), category.getName());
+               //例如此处菜单有更新以后可以删除缓存中的数据， stringRedisTemplate.delete("cateLogJsonLock");
+               //stringRedisTemplate.delete("cateLogJsonLock");
+           }
+           ```
+         
 
 
 #FastDFS
