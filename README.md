@@ -255,7 +255,7 @@
         String endpoint = "oss-cn-qingdao.aliyuncs.com";
         // 请填写您的 bucketname 。
         String bucket = "xufh-test-oss-1";
-        String accessId = "LTAI4G4a6BaJHCz73MtEFRkV";
+        String accessId = "";
         // host的格式为 bucketname.endpoint
         String host = "https://" + bucket + "." + endpoint;
         // callbackUrl为 上传回调服务器的URL，请将下面的IP和Port配置为您自己的真实信息。
@@ -377,9 +377,6 @@
         
         /**
          * @Description: 错误状态码枚举
-         * @Created: with IntelliJ IDEA.
-         * @author: 夏沫止水
-         * @createTime: 2020-05-27 17:29
          *
          * 错误码和错误信息定义类
          * 1. 错误码定义规则为5为数字
