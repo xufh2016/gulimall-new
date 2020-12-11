@@ -19,6 +19,7 @@ import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
@@ -85,11 +86,19 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
 
     /**
      * 级联更新 ,事务回滚需要完善
-     * @CacheEvict:失效模式 key = "'level1Categroies'"是spel表达式，常量一定要加‘’
+     *
      * @param category
+     * @CacheEvict:失效模式  1、 key = "'level1Categroies'"是spel表达式，常量一定要加‘’
+     *                      2、指定删除某个分区下的所有数据@CacheEvict(value="category" , allEntries = true)
+     *                      3、存储同一类型的数据，都可以指定成同一个分区。分区名默认就是缓存的前缀
      * @Transactional开启事务
+     * @Caching   1、同时进行多种缓存操作
      */
-    @CacheEvict(value = "category",key = "'level1Categroies'")
+//    @CacheEvict(value = "category", key = "'level1Categroies'")
+    @Caching(evict = {
+            @CacheEvict(value = "category", key = "'level1Categroies'"),
+            @CacheEvict(value = "category",key="'getCatalogJson'")
+    })
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void updateCascader(CategoryEntity category) {
@@ -100,15 +109,16 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
     }
 
     //每一个需要缓存的数据都要来指定放到哪个名字的缓存中（亦即缓存分区-->推荐按照业务类型分）
-    @Cacheable(value = {"category"},key = "'level1Categroies'") //表示当前方法的执行结果需要被缓存，如果缓存中有，方法不用调用，如果缓存中没有，则执行方法，最后将方法的执行结果放入缓存
+    @Cacheable(value = {"category"}, key = "'level1Categroies'",sync = true)
+    //表示当前方法的执行结果需要被缓存，如果缓存中有，方法不用调用，如果缓存中没有，则执行方法，最后将方法的执行结果放入缓存
     @Override
     public List<CategoryEntity> getLevel1Category() {
         List<CategoryEntity> categoryEntities = baseMapper.selectList(new QueryWrapper<CategoryEntity>().eq("parent_cid", 0));
         return categoryEntities;
     }
 
-    @Override
-    public Map<String, List<Catelog2Vo>> getCatalogJson() {
+    //    @Override
+    public Map<String, List<Catelog2Vo>> getCatalogJson2() {
         //todo:产生堆外内存溢出
         //springboot 2.0以后默认使用的是lettuce作为操作redis的客户端。它使用netty进行网络通信。lettuce的bug导致堆外内存溢出。
         //netty如果没有指定堆外内存，就会默认使用在jvm设置中的-Xmx128m，可以通过-Dio.netty.maxDirectMemory进行设置
@@ -127,6 +137,35 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryDao, CategoryEntity
         Map<String, List<Catelog2Vo>> map = JSON.parseObject(cateJson, new TypeReference<Map<String, List<Catelog2Vo>>>() {
         });
         return map;
+    }
+
+    @Cacheable(value = "category",key="#root.methodName")
+    @Override
+    public Map<String, List<Catelog2Vo>> getCatalogJson() {
+        List<CategoryEntity> selectList = this.baseMapper.selectList(null);
+        //1、查所有1级分类
+        List<CategoryEntity> level1Category = getParent_cid(selectList, 0L);
+        Map<String, List<Catelog2Vo>> parent_cid = level1Category.stream().collect(Collectors.toMap(k -> k.getCatId().toString(), v -> {
+            //遍历每一个一级分类，查到这个一级分类的二级分类
+            List<CategoryEntity> categoryEntities = getParent_cid(selectList, v.getCatId());
+            List<Catelog2Vo> collect = null;
+            if (categoryEntities != null) {
+                collect = categoryEntities.stream().map(l2 -> {
+                    Catelog2Vo catelog2Vo = new Catelog2Vo(v.getCatId().toString(), null, l2.getCatId().toString(), l2.getName());
+                    List<CategoryEntity> categoryEntities1 = getParent_cid(selectList, l2.getCatId());
+                    if (categoryEntities1 != null) {
+                        List<Catelog2Vo.Category3Vo> collect1 = categoryEntities1.stream().map(l3 -> {
+                            Catelog2Vo.Category3Vo category3Vo = new Catelog2Vo.Category3Vo(l2.getCatId().toString(), l3.getCatId().toString(), l3.getName());
+                            return category3Vo;
+                        }).collect(Collectors.toList());
+                        catelog2Vo.setCatalog3List(collect1);
+                    }
+                    return catelog2Vo;
+                }).collect(Collectors.toList());
+            }
+            return collect;
+        }));
+        return parent_cid;
     }
 
     /**

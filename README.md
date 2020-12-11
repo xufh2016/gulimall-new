@@ -714,7 +714,7 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
    ```
    使用springboot自动配置好的RedisTemplate<Object,Object>或StringRedisTemplate来操作redis  
    无论使用的是lettuce还是jedis客户端作为redis底层的客户端，springboot都进行了重新封装即RedisTemplate<Object,Object>
-    和StringRedisTemplate
+   和StringRedisTemplate
 5. redis报错redisexception io.netty.util.internal.OutOfDirectMemoryError
    ```java
     //springboot 2.0以后默认使用的是lettuce作为操作redis的客户端。它使用netty进行网络通信。lettuce的bug导致堆外内存溢出。
@@ -748,7 +748,7 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
      解决：null结果缓存，并加入短暂过期时间，比如几分钟后过期
    
    + 缓存雪崩
-     缓存雪崩是指在我们设置缓存时key采用了相同的过期时间，导致缓存在某一时刻同时失效，请求全部转发到DB，DB瞬时压力过重雪崩。  
+     缓存雪崩是指在我们设置缓存时，key采用了相同的过期时间，导致缓存在某一时刻同时失效，请求全部转发到DB，DB瞬时压力过重雪崩。  
      解决：原有的失效时间基础上增加一个随机值，比如1~5分钟随机，这样每个缓存的过期时间的重复率就会降低，就较难引发集体失效的事件。
    
    + 缓存击穿
@@ -758,38 +758,38 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
 7. 分布式锁
    + 第一种方式
     ```java
-        public Map<String, List<Catelog2Vo>> getCatalogJsonFromDbWithRedisLock() {
-            //1、占分布式锁setIfAbsent就是redis中的setNX命令
-            String uuid = UUID.randomUUID().toString();
-            //这样是原子操作，redis底层是这样做的：setnxex
-            Boolean lock = stringRedisTemplate.opsForValue().setIfAbsent("lock", uuid, 300, TimeUnit.SECONDS);
-            Map<String, List<Catelog2Vo>> stringListMap = null;
-            if (lock) {
-                //设置过期时间，这样也是有缺陷的，这是非原子性的。stringRedisTemplate.expire("lock",30,TimeUnit.SECONDS);
-                //加锁成功,执行业务
-                try {
-                    stringListMap = getStringListMap();
-                } finally {
-                    String lua_scripts = "if redis.call(\"get\",KEYS[1]) == ARGV[1] then\n" +
-                            "    return redis.call(\"del\",KEYS[1])\n" +
-                            "else\n" +
-                            "    return 0\n" +
-                            "end";
-                    Long lock2 = stringRedisTemplate.execute(new DefaultRedisScript<Long>(lua_scripts, Long.class), Arrays.asList("lock"), uuid);
-                }
-                //执行成功以后需要释放锁。
-                //删除分布式锁的时候需要判断是不是自己的锁，是自己的锁才可以删除。但这样依然是有问题的，这样是非原子性操作
-                //获取lock的值和对比成功删除也需要原子操作可以使用lua脚本
-                //String lock1 = stringRedisTemplate.opsForValue().get("lock");
-                /*if (uuid.equals(lock1)){
-                    stringRedisTemplate.delete("lock");
-                }*/
-                return stringListMap;
-            } else {//加锁失败，重试,相当于自旋的方式进行重试。
-                //可以休眠一段时间再重试
-                return getCatalogJsonFromDbWithRedisLock();
+    public Map<String, List<Catelog2Vo>> getCatalogJsonFromDbWithRedisLock() {
+        //1、占分布式锁setIfAbsent就是redis中的setNX命令
+        String uuid = UUID.randomUUID().toString();
+        //这样是原子操作，redis底层是这样做的：setnxex
+        Boolean lock = stringRedisTemplate.opsForValue().setIfAbsent("lock", uuid, 300, TimeUnit.SECONDS);
+        Map<String, List<Catelog2Vo>> stringListMap = null;
+        if (lock) {
+            //设置过期时间，这样也是有缺陷的，这是非原子性的。stringRedisTemplate.expire("lock",30,TimeUnit.SECONDS);
+            //加锁成功,执行业务
+            try {
+                stringListMap = getStringListMap();
+            } finally {
+                String lua_scripts = "if redis.call(\"get\",KEYS[1]) == ARGV[1] then\n" +
+                        "    return redis.call(\"del\",KEYS[1])\n" +
+                        "else\n" +
+                        "    return 0\n" +
+                        "end";
+                Long lock2 = stringRedisTemplate.execute(new DefaultRedisScript<Long>(lua_scripts, Long.class), Arrays.asList("lock"), uuid);
             }
+            //执行成功以后需要释放锁。
+            //删除分布式锁的时候需要判断是不是自己的锁，是自己的锁才可以删除。但这样依然是有问题的，这样是非原子性操作
+            //获取lock的值和对比成功删除也需要原子操作可以使用lua脚本
+            //String lock1 = stringRedisTemplate.opsForValue().get("lock");
+            /*if (uuid.equals(lock1)){
+                stringRedisTemplate.delete("lock");
+            }*/
+            return stringListMap;
+        } else {//加锁失败，重试,相当于自旋的方式进行重试。
+            //可以休眠一段时间再重试
+            return getCatalogJsonFromDbWithRedisLock();
         }
+    }
     ```
    
 8. java中的各种锁
@@ -852,9 +852,12 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
         }
     }
    ```
-   Redisson解决了1、自动续期，如果业务超长，运行期间自动给锁续期上新的30s。不用担心业务时间长，锁自动过期被删除；  
-   2、加锁的业务只要运行完成，就不会给当前锁续期，即使不手动解锁，锁默认在30s以后自动删除；3、有一个看门狗机制。4、自动解锁时间
-   一定要大于业务的执行时间。5、在手动设置锁的过期时间的时候是不使用看门狗机制的  
+   Redisson解决了  
+   1、自动续期，如果业务超长，运行期间自动给锁续期上新的30s。不用担心业务时间长，锁自动过期被删除；  
+   2、加锁的业务只要运行完成，就不会给当前锁续期，即使不手动解锁，锁默认在30s以后自动删除；  
+   3、有一个看门狗机制。  
+   4、自动解锁时间一定要大于业务的执行时间。  
+   5、在手动设置锁的过期时间的时候是不使用看门狗机制的  
    + 问题：lock.lock(10,TimeUnit.SECONDS);在锁时间到了以后，不会自动续期。
      1. 如果我们传递了锁的超时时间，就发送给redis执行脚本，进行占锁，默认超时就是我们指定的时间
      2. 如我们未指定锁的超时时间，就使用30*1000【LockWatchdogTimeOut看门狗的默认时间】；只要占锁成功，就会启动一个定时任务【
@@ -886,12 +889,12 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
      2. 从缓存中读取之前缓存存储的数据
 2. 整合Spring Cache
    1. 引入依赖
-   ```xml
-    <dependency>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-cache</artifactId>
-    </dependency>
-   ```
+       ```xml
+       <dependency>
+           <groupId>org.springframework.boot</groupId>
+           <artifactId>spring-boot-starter-cache</artifactId>
+       </dependency>
+       ```
    2. 引入redis开发场景
    3. 写配置
       ```properties
@@ -913,10 +916,12 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
       1. 指定生成的缓存使用的key
          ```java
          //每一个需要缓存的数据都要来指定放到哪个名字的缓存中（亦即缓存分区-->推荐按照业务类型分）
-         @Cacheable(value = {"category"},key = "'level1Categroies'") //表示当前方法的执行结果需要被缓存，如果缓存中有，方法不用调用，如果缓存中没有，则执行方法，最后将方法的执行结果放入缓存
+         //表示当前方法的执行结果需要被缓存，如果缓存中有，方法不用调用，如果缓存中没有，则执行方法，最后将方法的执行结果放入缓存
+         @Cacheable(value = {"category"},key = "'level1Categroies'")
          @Override
          public List<CategoryEntity> getLevel1Category() {
-             List<CategoryEntity> categoryEntities = baseMapper.selectList(new QueryWrapper<CategoryEntity>().eq("parent_cid", 0));
+             List<CategoryEntity> categoryEntities = 
+                                  baseMapper.selectList(new QueryWrapper<CategoryEntity>().eq("parent_cid", 0));
              return categoryEntities;
          }
          ```
@@ -926,8 +931,8 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
          ```
       3. 将数据保存为json格式（需要自定义缓存管理器）
          + CacheAutoConfiguration->RedisCacheConfiguration->自动配置了RedisCacheManager->初始化所有的缓存->每个缓存决定使用
-           什么配置->如果redisCacheConfiguration有就用已有的，没有就使用默认配置->想改缓存的配置，只需要给容器中放一个RedisCacheConfiguration
-           即可->就会应用到当前RedisCacheManager管理的所有缓存分区中。
+           什么配置->如果redisCacheConfiguration有就用已有的，没有就使用默认配置->想改缓存的配置，只需要给容器中放一个
+           RedisCacheConfiguration即可->就会应用到当前RedisCacheManager管理的所有缓存分区中。
            ```java
            package com.coolfish.gmall.product.config;
            
@@ -989,7 +994,19 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
                //stringRedisTemplate.delete("cateLogJsonLock");
            }
            ```
-         
+   7. Spring Cache的不足：
+      + 读模式：
+        + 缓存穿透：查询一个null数据（即查询一个永不存在的空数据）。解决：缓存一个空数据：cache-null-values=true
+        + 缓存击穿：大量并发进来同时进来查询一个正好过期的数据。  
+          解决：加锁?->默认是无加锁的，可以使用@Cacheable(value = {"category"}, key = "'level1Categroies'",sync = true)解决缓存击穿
+        + 缓存雪崩：大量的key同时过期。解决：加随机时间
+      + 写模式（缓存与数据库一致）：
+        + 读写加锁。适用于读多写少的数据
+        + 引入Canal，感知到Mysql的更新去更新数据库
+        + 读多写多，直接数据库查询就行
+      + 总结:
+        + 常规数据（读多写少，即时性，一致性要求不高的数据）完全可以使用spring cache，写模式（只要缓存的数据有过期时间就足够了）
+        + 特殊数据：特殊设计（如使用canal等）
 
 
 #FastDFS
@@ -1134,3 +1151,11 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
    ```
 5. ApplicationRunner接口和CommandLineRunner接口
    + 作用：实现系统启动完后做一些系统初始化的操作。
+   
+    
+   
+   
+#Spring Boot
+
+
+   
