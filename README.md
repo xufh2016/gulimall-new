@@ -1008,6 +1008,46 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
         + 常规数据（读多写少，即时性，一致性要求不高的数据）完全可以使用spring cache，写模式（只要缓存的数据有过期时间就足够了）
         + 特殊数据：特殊设计（如使用canal等）
 
+##线程池
+1. 自定义线程池
+    ```java
+    package net.agrorobot.car_daemon.config;
+    
+    import org.springframework.context.annotation.Bean;
+    import org.springframework.context.annotation.Configuration;
+    import org.springframework.scheduling.annotation.EnableAsync;
+    
+    import java.util.concurrent.*;
+    
+    /**
+     * @author 28251
+     */
+    @Configuration
+    @EnableAsync
+    public class WebullThreadPoolConfig {
+        @Bean
+        public ExecutorService getAsyncExecutor() {
+            /**
+             * 自定义线程池
+             * 1.
+             */
+            int corePoolSize = Runtime.getRuntime().availableProcessors();
+            ThreadPoolExecutor poolExecutor = new ThreadPoolExecutor(
+                    corePoolSize,
+                    corePoolSize + 2,
+                    3,
+                    TimeUnit.SECONDS,
+                    new LinkedBlockingDeque<>(3),
+                    Executors.defaultThreadFactory(),
+                    new ThreadPoolExecutor.DiscardOldestPolicy());
+            poolExecutor.allowCoreThreadTimeOut(true);
+            return poolExecutor;
+        }
+    }
+    ```
+2. 为什么不用另外三个jdk提供的线程池api呢？  
+   为了规避资源耗尽的风险。  
+   
 
 #FastDFS
 
