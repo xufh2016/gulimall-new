@@ -588,6 +588,7 @@
       + 带_update会对比原数据，如果没有变化则noop（no operation）
       + 不带_update，则会不断的进行更新并叠加版本等 
 6. 进阶高级用法
+
    1. SearchApi
       + ES支持两种基本方式检索：
         + 一个是通过使用Rest request URI发送搜索参数（uri+检索参数）
@@ -672,7 +673,7 @@
 ###JMeter报错
 ####JMeter Address Already in use
 win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端口为1024~5000，并且要四分钟来循环回收他们，这样就导致我们在短时间内跑大  
-量的请求时将端口沾满了
+量的请求时将端口占满了
 1. cmd中，用regedit命令打开注册表
 2. 在HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Services\Tcpic\Parameters下，
    + 右击parameters，添加一个新的DWORD，名字为MaxUserPort
@@ -807,7 +808,7 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
      **悲观锁阻塞事务，乐观锁回滚重试**，他们各有优缺点，没有好坏之分，只有适应的场景的不同区别。**乐观锁适合写比较少，冲突很少
      发生的场景；而写多的场景适合使用悲观锁**
    + 乐观锁的基础 --- CAS
-     什么是CAS? Compare-and-Swap,即比较并替换，或者比较并设置
+     什么是CaS? Compare-and-Swap,即比较并替换，或者比较并设置
      1. 比较：读取到一个值A，在将其更新为B之前，检查原值是否为A（未被其他线程修改过，这里忽略ABA问题）。
      2. 替换：如果是，更新A为B，结束。如果不是，则不会更新。  
    + 自旋锁
@@ -1029,15 +1030,16 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
         public ExecutorService getAsyncExecutor() {
             /**
              * 自定义线程池
-             * 1.
+             * 1. 将所有的异步任务都交给线程池执行。当前系统中线程池只有一到两个，每个异步任务直接提交给线程池，让线程池去执行线程就好。
+             * 2. 启动线程池可以使用submit()或execute()
              */
             int corePoolSize = Runtime.getRuntime().availableProcessors();
             ThreadPoolExecutor poolExecutor = new ThreadPoolExecutor(
                     corePoolSize,
-                    corePoolSize + 2,
+                    corePoolSize * 2,
                     3,
                     TimeUnit.SECONDS,
-                    new LinkedBlockingDeque<>(3),
+                    new LinkedBlockingDeque<>(100),//这个值可以根据压测得到的最大值
                     Executors.defaultThreadFactory(),
                     new ThreadPoolExecutor.DiscardOldestPolicy());
             poolExecutor.allowCoreThreadTimeOut(true);
@@ -1047,8 +1049,10 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
     ```
 2. 为什么不用另外三个jdk提供的线程池api呢？  
    为了规避资源耗尽的风险。  
-   
-
+3. 当并发进来时，线程池是这样做的，先执行corepoolsize的任务，再将剩余的线程放到等待队列中，如果等待队列依然容纳不了剩余的线程，则会
+   再开启maxpoolsize-corepoolsize大小的线程，将任务放入这些线程中，再有剩余则根据线程处理策略进行丢弃。   
+4. CompletableFuture异步编排  
+   1. 线程串行化
 #FastDFS
 
 ##linux
@@ -1192,7 +1196,7 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
 5. ApplicationRunner接口和CommandLineRunner接口
    + 作用：实现系统启动完后做一些系统初始化的操作。
    
-    
+6. 浏览器对空格“ ”的编译为20%  java对空格的编译为“+”    
    
    
 #Spring Boot
