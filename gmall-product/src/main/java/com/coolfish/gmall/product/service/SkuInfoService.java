@@ -3,6 +3,7 @@ package com.coolfish.gmall.product.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.coolfish.common.utils.PageUtils;
 import com.coolfish.gmall.product.entity.SkuInfoEntity;
+import com.coolfish.gmall.product.vo.SkuItemVo;
 
 import java.util.List;
 import java.util.Map;
@@ -23,5 +24,7 @@ public interface SkuInfoService extends IService<SkuInfoEntity> {
     PageUtils queryPageByCondition(Map<String, Object> params);
 
     List<SkuInfoEntity> getSkusBySpuId(Long spuId);
+
+    SkuItemVo item(Long skuId);
 }
 

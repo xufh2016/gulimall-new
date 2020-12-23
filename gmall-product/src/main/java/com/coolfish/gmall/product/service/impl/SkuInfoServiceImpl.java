@@ -1,8 +1,15 @@
 package com.coolfish.gmall.product.service.impl;
 
+import com.coolfish.gmall.product.entity.SkuImagesEntity;
+import com.coolfish.gmall.product.entity.SpuInfoDescEntity;
+import com.coolfish.gmall.product.service.SkuImagesService;
+import com.coolfish.gmall.product.service.SpuInfoDescService;
+import com.coolfish.gmall.product.vo.SkuItemVo;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +27,12 @@ import com.coolfish.gmall.product.service.SkuInfoService;
 
 @Service("skuInfoService")
 public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoDao, SkuInfoEntity> implements SkuInfoService {
+    @Autowired
+    SkuImagesService skuImagesService;
+
+    @Autowired
+    SpuInfoDescService spuInfoDescService;
+
 
     @Override
     public PageUtils queryPage(Map<String, Object> params) {
@@ -46,12 +59,12 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoDao, SkuInfoEntity> i
             });
         }
         String catelogId = (String) params.get("catelogId");
-        if (!StringUtils.isEmpty(catelogId)&&!"0".equalsIgnoreCase(catelogId)) {
+        if (!StringUtils.isEmpty(catelogId) && !"0".equalsIgnoreCase(catelogId)) {
 
             wrapper.eq("catelog_id", catelogId);
         }
         String brandId = (String) params.get("brandId");
-        if (!StringUtils.isEmpty(brandId)&&!"0".equalsIgnoreCase(brandId)) {
+        if (!StringUtils.isEmpty(brandId) && !"0".equalsIgnoreCase(brandId)) {
             wrapper.eq("brand_id", brandId);
         }
         String min = (String) params.get("min");
@@ -74,6 +87,25 @@ public class SkuInfoServiceImpl extends ServiceImpl<SkuInfoDao, SkuInfoEntity> i
     public List<SkuInfoEntity> getSkusBySpuId(Long spuId) {
         List<SkuInfoEntity> list = this.list(new QueryWrapper<SkuInfoEntity>().eq("spu_id", spuId));
         return list;
+    }
+
+    @Override
+    public SkuItemVo item(Long skuId) {
+        SkuItemVo skuItemVo = new SkuItemVo();
+        //1、sku基本信息获取 pms_sku_info表
+        SkuInfoEntity skuInfoEntity = getById(skuId);
+        skuItemVo.setInfo(skuInfoEntity);
+        //2、sku的图片信息
+        List<SkuImagesEntity> images = skuImagesService.getImagesBySkuId(skuId);
+        skuItemVo.setImages(images);
+        //3、获取spu的销售属性组合
+        //4、获取spu的介绍
+        Long spuId = skuInfoEntity.getSpuId();
+        SpuInfoDescEntity descEntity = spuInfoDescService.getById(spuId);
+        skuItemVo.setDesc(descEntity);
+        //5、获取spu的规格参数信息
+
+        return skuItemVo;
     }
 
 }

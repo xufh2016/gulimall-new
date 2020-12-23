@@ -1,6 +1,5 @@
 package com.coolfish.gmall.product.vo;
 
-import com.baomidou.mybatisplus.annotation.TableId;
 import com.coolfish.gmall.product.entity.AttrEntity;
 import lombok.Data;
 

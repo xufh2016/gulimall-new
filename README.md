@@ -1052,7 +1052,67 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
 3. 当并发进来时，线程池是这样做的，先执行corepoolsize的任务，再将剩余的线程放到等待队列中，如果等待队列依然容纳不了剩余的线程，则会
    再开启maxpoolsize-corepoolsize大小的线程，将任务放入这些线程中，再有剩余则根据线程处理策略进行丢弃。   
 4. CompletableFuture异步编排  
-   1. 线程串行化
+   1. 线程串行化(如果使用ComplatableFuture来开启异步编排，不要用链式调用，链式调用又会串行化，而不是异步)  
+   
+   这样使用：
+   ```java
+   public SkuItemVo item(Long skuId) throws ExecutionException, InterruptedException {
+
+       SkuItemVo skuItemVo = new SkuItemVo();
+
+       CompletableFuture<SkuInfoEntity> infoFuture = CompletableFuture.supplyAsync(() -> {
+           //1、sku基本信息的获取  pms_sku_info
+           SkuInfoEntity info = this.getById(skuId);
+           skuItemVo.setInfo(info);
+           return info;
+       }, executor);
+
+       CompletableFuture<Void> saleAttrFuture = infoFuture.thenAcceptAsync((res) -> {
+           //3、获取spu的销售属性组合
+           List<SkuItemSaleAttrVo> saleAttrVos = skuSaleAttrValueService.getSaleAttrBySpuId(res.getSpuId());
+           skuItemVo.setSaleAttr(saleAttrVos);
+       }, executor);
+
+       CompletableFuture<Void> descFuture = infoFuture.thenAcceptAsync((res) -> {
+           //4、获取spu的介绍    pms_spu_info_desc
+           SpuInfoDescEntity spuInfoDescEntity = spuInfoDescService.getById(res.getSpuId());
+           skuItemVo.setDesc(spuInfoDescEntity);
+       }, executor);
+
+       CompletableFuture<Void> baseAttrFuture = infoFuture.thenAcceptAsync((res) -> {
+           //5、获取spu的规格参数信息
+           List<SpuItemAttrGroupVo> attrGroupVos = attrGroupService.getAttrGroupWithAttrsBySpuId(res.getSpuId(), res.getCatalogId());
+           skuItemVo.setGroupAttrs(attrGroupVos);
+       }, executor);
+
+       //2、sku的图片信息    pms_sku_images
+       CompletableFuture<Void> imageFuture = CompletableFuture.runAsync(() -> {
+           List<SkuImagesEntity> imagesEntities = skuImagesService.getImagesBySkuId(skuId);
+           skuItemVo.setImages(imagesEntities);
+       }, executor);
+
+       CompletableFuture<Void> seckillFuture = CompletableFuture.runAsync(() -> {
+           //3、远程调用查询当前sku是否参与秒杀优惠活动
+           R skuSeckilInfo = seckillFeignService.getSkuSeckilInfo(skuId);
+           if (skuSeckilInfo.getCode() == 0) {
+               //查询成功
+               SeckillSkuVo seckilInfoData = skuSeckilInfo.getData("data", new TypeReference<SeckillSkuVo>() {
+               });
+               skuItemVo.setSeckillSkuVo(seckilInfoData);
+
+               if (seckilInfoData != null) {
+                   long currentTime = System.currentTimeMillis();
+                   if (currentTime > seckilInfoData.getEndTime()) {
+                       skuItemVo.setSeckillSkuVo(null);
+                   }
+               }
+           }
+       }, executor);
+       //等到所有任务都完成
+       CompletableFuture.allOf(saleAttrFuture,descFuture,baseAttrFuture,imageFuture,seckillFuture).get();
+       return skuItemVo;
+   }
+   ```
 #FastDFS
 
 ##linux
