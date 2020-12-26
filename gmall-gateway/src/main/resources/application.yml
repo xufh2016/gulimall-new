@@ -59,3 +59,11 @@ spring:
           uri: lb://gmall-search
           predicates:
             - Host=search.gmall.com
+        - id: gmall_authr_route
+          uri: lb://gmall-auth-server
+          predicates:
+            - Host=auth.gmall.com
+        - id: gmall_cart_route
+          uri: lb://gmall-cart
+          predicates:
+            - Host=cart.gmall.com

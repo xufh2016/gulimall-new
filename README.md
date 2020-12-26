@@ -1008,7 +1008,22 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
       + 总结:
         + 常规数据（读多写少，即时性，一致性要求不高的数据）完全可以使用spring cache，写模式（只要缓存的数据有过期时间就足够了）
         + 特殊数据：特殊设计（如使用canal等）
-
+3. Redis
+   1. 常用的5种存储结构
+      + key   string  一个key对应一个值
+      + key   hash    一个key对应一个hashmap，一般用于存贮对象
+      + key   list    一个key对应一个列表        可重复，有序
+      + key   set     一个key对应一个集合        不可重复，无序
+      + key   zset    一个key对应一个有序集合    不可重复，有序
+   2. 另外三种数据结构
+      + HyperLogLog   计算近似值的
+      + GEO           地理位置
+      + BIT：         一般存储的也是一个字符串，存储的是一个byte[] 字节数组  
+      
+      
+      
+      
+      
 ##线程池
 1. 自定义线程池
     ```java
@@ -1136,19 +1151,79 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
    sudo apt-get update
    ```
 
+##页面跳转
+1. 可以用这种方式替换
+   ```java
+   package com.coolfish.gmall.auth.config;
+   
+   import org.springframework.context.annotation.Configuration;
+   import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
+   import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+   
+   
+   @Configuration
+   public class GmallWebConfig implements WebMvcConfigurer {
+       /**
+        * 视图映射中添加好页面跳转
+        * @param registry
+        */
+   
+       @Override
+       public void addViewControllers(ViewControllerRegistry registry) {
+           registry.addViewController("/login.html").setViewName("login");
+           registry.addViewController("/reg.html").setViewName("reg");
+       }
+   }
+   ```
+   原来的方式：
+   ```java
+   package com.coolfish.gmall.auth.controller;
+   
+   import org.springframework.stereotype.Controller;
+   import org.springframework.web.bind.annotation.GetMapping;
+   
+   @Controller
+   public class LoginController {
+       /**
+        * 发送一个请求直接跳转到一个页面。
+        * springmvc的viewcontroller；将请求和页面映射过来
+          路径转发默认用get请求
+        * @return
+        */
+   
+       @GetMapping("login.html")
+       public String loginPage() {
+   
+   
+           return "login";
+       }
+   
+       @GetMapping("reg.html")
+       public String regPage() {
+   
+   
+           return "reg";
+       }
+   }
+   ```
+2. @RequestParam和@PathVariable   
+   + 通过@PathVariable，例如/blogs/1  
+     1、当URL指向的是某一具体业务资源（或资源列表），例如博客，用户时，使用@PathVariable
+   + 通过@RequestParam，例如blogs?blogId=1  
+     2、当URL需要对资源或者资源列表进行过滤，筛选时，用@RequestParam
+
+3. BCryptPasswordEncoder类的使用
+   + 用的时候直接new   
+
+4.  OAuth2.0
+
+5. session共享问题
+   + 不同域名不能共享session
+   + session在集群环境下不同步 
 
 
-
-
-
-
-
-
-
-
-
-
-
+##多系统单点登录
+1. 
 
 
 

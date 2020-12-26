@@ -1,9 +1,8 @@
-package com.coolfish.gmall.thirdparty;
+package com.coolfish.gmall.thirdparty.component;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
+import lombok.Data;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -16,24 +15,24 @@ import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Map;
 
-@RunWith(SpringRunner.class)
-//@SpringBootTest
-public class GmallThirdPartyApplicationTests {
+@ConfigurationProperties(prefix = "spring.cloud.alicloud.sms")
+@Component
+@Data
+public class SmsComponent {
+    private String host;
+    private String path;
+    private String appcode;
+    private String sign;
+    private String skin;
 
-
-    /*@Test
-    void contextLoads() {
-    }*/
-
-    @Test
-    public void testSms() {
-        String host = "https://smsmsgs.market.alicloudapi.com";  // 【1】请求地址 支持http 和 https 及 WEBSOCKET
+    public void sendSms(String code,String phone) {
+    /*    String host = "https://smsmsgs.market.alicloudapi.com";  // 【1】请求地址 支持http 和 https 及 WEBSOCKET
         String path = "/sms/";  // 【2】后缀
         String appcode = "6c437697f09d43a784fc67ed635e9308"; // 【3】开通服务后 买家中心-查看AppCode
         String code = "123456";  // 【4】请求参数，详见文档描述
         String phone = "13705428302";  //  【4】请求参数，详见文档描述
         String sign = "2";   //  【4】请求参数，详见文档描述
-        String skin = "1";  //  【4】请求参数，详见文档描述
+        String skin = "1";  //  【4】请求参数，详见文档描述*/
         String urlSend = host + path + "?code=" + code + "&phone=" + phone + "&sign=" + sign + "&skin=" + skin;   // 【5】拼接请求链接
         try {
             URL url = new URL(urlSend);
@@ -88,6 +87,5 @@ public class GmallThirdPartyApplicationTests {
         br.close();
         return sb.toString();
     }
-
 
 }

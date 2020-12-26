@@ -22,6 +22,7 @@
         <module>renren-generator</module>
         <module>gmall-common</module>
         <module>gmall-third-party</module>
+        <module>gmall-auth-server</module>
     </modules>
 
 </project>
