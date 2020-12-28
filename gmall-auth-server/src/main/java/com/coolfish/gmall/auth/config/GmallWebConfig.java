@@ -17,6 +17,7 @@ public class GmallWebConfig implements WebMvcConfigurer {
 
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
+        //addViewController添加请求路径，setViewName添加视图名
         registry.addViewController("/login.html").setViewName("login");
         registry.addViewController("/reg.html").setViewName("reg");
     }

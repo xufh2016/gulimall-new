@@ -1,18 +1,17 @@
 spring:
-
   cloud:
     nacos:
       discovery:
         server-addr: 127.0.0.1:8848
       config:
         server-addr: 127.0.0.1:8848
-    alicloud:
-      sms:
-        host: https://smsmsgs.market.alicloudapi.com
-        path: /sms/
-        appcode: 6c437697f09d43a784fc67ed635e9308
-        sign: 2
-        skin: 1
+  alicloud:
+    sms:
+      host: https://smsmsgs.market.alicloudapi.com
+      path: /sms/
+      appcode: 6c437697f09d43a784fc67ed635e9308
+      sign: 2
+      skin: 1
   application:
     name: gmall-third-party
 server:

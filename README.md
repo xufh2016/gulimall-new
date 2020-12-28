@@ -1230,8 +1230,132 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
 
 
 
+##购物车中的知识点
+1. 拦截器的使用
+   ```java
+   package com.coolfish.gmall.cart.interceptor;
+   
+   import com.coolfish.common.constant.AuthServerConstant;
+   import com.coolfish.common.constant.CartConstant;
+   import com.coolfish.common.vo.MemberResponseVo;
+   import com.coolfish.gmall.cart.to.UserInfoTo;
+   import org.springframework.stereotype.Component;
+   import org.springframework.util.StringUtils;
+   import org.springframework.web.servlet.HandlerInterceptor;
+   import org.springframework.web.servlet.ModelAndView;
+   
+   import javax.servlet.http.Cookie;
+   import javax.servlet.http.HttpServletRequest;
+   import javax.servlet.http.HttpServletResponse;
+   import javax.servlet.http.HttpSession;
+   import java.util.UUID;
+   
+   /**
+    * 在执行目标方法之前，判断用户的登陆状态。并封装传递给目标请求
+    *
+    * @author 28251
+    * springmvc拦截器必须实现HandlerInterceptor接口
+    */
+   public class CartInterceptor implements HandlerInterceptor {
+   
+       public static ThreadLocal<UserInfoTo> threadLocal = new ThreadLocal<>();
+   
+       /**
+        * 拦截器用于拦截哪个请求是需要配置的
+        * 这个方法用于处理目标方法执行之前判断用户登录状态，并封装传递给controller目标请求
+        *
+        * @param request
+        * @param response
+        * @param handler
+        * @return false代表不放行目标方法，true代表放行目标方法
+        * @throws Exception
+        */
+       @Override
+       public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+           UserInfoTo info = new UserInfoTo();
+   
+           HttpSession session = request.getSession();
+           MemberResponseVo attribute = (MemberResponseVo) session.getAttribute(AuthServerConstant.LOGIN_USER);
+           if (attribute != null) {
+               //用户没登录
+               info.setUserId(attribute.getId());
+           }
+           Cookie[] cookies = request.getCookies();
+           if (cookies != null && cookies.length > 0) {
+               for (Cookie cookie : cookies) {
+                   if (cookie.getName().equals(CartConstant.TEMP_USER_COOKIE_NAME)) {
+                       info.setUserKey(cookie.getValue());
+                       info.setTempUser(true);
+                   }
+               }
+           }
+           //如果没有临时用户一定分配一个临时用户
+           if (StringUtils.isEmpty(info.getUserKey())) {
+               String uuid = UUID.randomUUID().toString();
+               info.setUserKey(uuid);
+           }
+           //目标方法执行之前
+           threadLocal.set(info);
+           return true;
+       }
+   
+       /**
+        * 业务执行之后需要操作的,分配临时用户，让浏览器保存
+        *
+        * @param request
+        * @param response
+        * @param handler
+        * @param modelAndView
+        * @throws Exception
+        */
+       @Override
+       public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler, ModelAndView modelAndView) throws Exception {
+           UserInfoTo userInfoTo = threadLocal.get();
+           if (!userInfoTo.getTempUser()) {
+               Cookie cookie = new Cookie(CartConstant.TEMP_USER_COOKIE_NAME, userInfoTo.getUserKey());
+               cookie.setDomain("gmall.com");
+               cookie.setMaxAge(CartConstant.TEMP_USER_COOKIE_TIMEOUT);
+               response.addCookie(cookie);
+           }
+   
+       }
+   }
+   ```
+   并在config包下实现如下配置：
+   ```java
+   package com.coolfish.gmall.cart.config;
+   
+   import com.coolfish.gmall.cart.interceptor.CartInterceptor;
+   import org.springframework.context.annotation.Configuration;
+   import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+   import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+   
+   /**
+    * @author 28251
+    * 要使自定义拦截器工作需要实现WebMvcConfigurer接口，并重新addInterceptors方法，在registry添加拦截请求
+    */
+   @Configuration
+   public class GmallWebConfig implements WebMvcConfigurer {
+       @Override
+       public void addInterceptors(InterceptorRegistry registry) {
+           //“/**”表示拦截所有请求
+           registry.addInterceptor(new CartInterceptor()).addPathPatterns("/**");
+       }
+   }
+   ```
+2. ThreadLocal的使用
+   通常情况下，我们创建的变量是可以被任何一个线程访问并修改的。而使用ThreadLocal创建的变量只能被当前线程访问，其他线程则无法访问
+   和修改。
 
-
+##Java线程与硬件处理器
+在Window系统和Linux系统上，Java线程的实现是基于一对一的线程模型，所谓的一对一模型，实际上就是通过语言级别层面程序去间接调用系统
+内核的线程模型，即我们在使用Java线程时，Java虚拟机内部是转而调用当前操作系统的内核线程来完成当前任务。这里需要了解一个术语，内核
+线程(Kernel-Level Thread，KLT)，它是由操作系统内核(Kernel)支持的线程，这种线程是由操作系统内核来完成线程切换，内核通过操作调度
+器进而对线程执行调度，并将线程的任务映射到各个处理器上。每个内核线程可以视为内核的一个分身,这也就是操作系统可以同时处理多任务的
+原因。由于我们编写的多线程程序属于语言层面的，程序一般不会直接去调用内核线程，取而代之的是一种轻量级的进程(Light Weight Process)
+，也是通常意义上的线程，由于每个轻量级进程都会映射到一个内核线程，因此我们可以通过轻量级进程调用内核线程，进而由操作系统内核将任务
+映射到各个处理器，这种轻量级进程与内核线程间1对1的关系就称为一对一的线程模型。
+![avatar](static/img/7925105-79fa27d5bba342d5.webp)
 
 
 #Idea报错信息

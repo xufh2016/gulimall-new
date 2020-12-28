@@ -1,6 +1,7 @@
 package com.coolfish.gmall.product.exception;
 
 
+import com.coolfish.common.exception.BizCodeEnum;
 import com.coolfish.common.utils.R;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.BindingResult;
@@ -36,8 +37,13 @@ public class GMallExceptionControllerAdvice {
     }
 
     // 大范围的异常处理，在此例中是指上面的异常处理方法不能精确处理时，使用此处的异常处理方法
+
     @ExceptionHandler(value = Throwable.class)
-    public R handleException(Throwable e) {
-        return R.error();
+    public R handleException(Throwable throwable) {
+
+        log.error("错误异常{}",throwable);
+
+        return R.error(BizCodeEnum.UNKNOW_EXCEPTION.getCode(), BizCodeEnum.UNKNOW_EXCEPTION.getMessage());
     }
+
 }

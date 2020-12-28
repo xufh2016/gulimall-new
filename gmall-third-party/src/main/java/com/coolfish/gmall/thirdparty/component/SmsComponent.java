@@ -15,7 +15,7 @@ import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Map;
 
-@ConfigurationProperties(prefix = "spring.cloud.alicloud.sms")
+@ConfigurationProperties(prefix = "spring.alicloud.sms")
 @Component
 @Data
 public class SmsComponent {
@@ -33,11 +33,13 @@ public class SmsComponent {
         String phone = "13705428302";  //  【4】请求参数，详见文档描述
         String sign = "2";   //  【4】请求参数，详见文档描述
         String skin = "1";  //  【4】请求参数，详见文档描述*/
-        String urlSend = host + path + "?code=" + code + "&phone=" + phone + "&sign=" + sign + "&skin=" + skin;   // 【5】拼接请求链接
+        // 【5】拼接请求链接
+        String urlSend = host + path + "?code=" + code + "&phone=" + phone + "&sign=" + sign + "&skin=" + skin;
         try {
             URL url = new URL(urlSend);
             HttpURLConnection httpURLCon = (HttpURLConnection) url.openConnection();
-            httpURLCon.setRequestProperty("Authorization", "APPCODE " + appcode);// 格式Authorization:APPCODE (中间是英文空格)
+            // 格式Authorization:APPCODE (中间是英文空格)
+            httpURLCon.setRequestProperty("Authorization", "APPCODE " + appcode);
             int httpCode = httpURLCon.getResponseCode();
             if (httpCode == 200) {
                 String json = read(httpURLCon.getInputStream());
