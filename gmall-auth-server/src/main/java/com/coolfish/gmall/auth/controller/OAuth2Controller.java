@@ -21,13 +21,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-/**
- * @Description: 处理社交登录请求
- * @Created: with IntelliJ IDEA.
- * @author: 夏沫止水
- * @createTime: 2020-06-28 10:16
- **/
 
+/**
+ * FastJson、GSON、Jackson等都属于序列化工具
+ * 处理社交登录请求
+ * @author 28251
+ */
 @Slf4j
 @Controller
 public class OAuth2Controller {
@@ -40,8 +39,8 @@ public class OAuth2Controller {
     public String weibo(@RequestParam("code") String code, HttpSession session) throws Exception {
 
         Map<String, String> map = new HashMap<>();
-        map.put("client_id","2077705774");
-        map.put("client_secret","40af02bd1c7e435ba6a6e9cd3bf799fd");
+        map.put("client_id","1073408254");
+        map.put("client_secret","15ed7758bd3b507126c40e367cb47202");
         map.put("grant_type","authorization_code");
         map.put("redirect_uri","http://auth.gmall.com/oauth2.0/weibo/success");
         map.put("code",code);
@@ -62,6 +61,7 @@ public class OAuth2Controller {
             System.out.println(socialUser.getAccess_token());
             //调用远程服务
             R oauthLogin = memberFeignService.oauthLogin(socialUser);
+
             if (oauthLogin.getCode() == 0) {
                 MemberResponseVo data = oauthLogin.getData("data", new TypeReference<MemberResponseVo>() {});
                 log.info("登录成功：用户信息：{}",data.toString());
