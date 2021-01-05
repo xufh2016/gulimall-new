@@ -1219,7 +1219,9 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
 
 5. session共享问题
    + 不同域名不能共享session
+   + 分布式下session共享问题
    + session在集群环境下不同步 
+   
 
 
 ##多系统单点登录

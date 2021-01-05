@@ -6,6 +6,8 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.session.data.redis.config.annotation.web.http.EnableRedisHttpSession;
 
+import java.util.HashSet;
+
 /**
  * 核心原理
  * 1、@EnableRedisHttpSession 导入了 RedisHttpSessionConfiguration配置
