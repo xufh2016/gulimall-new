@@ -19,8 +19,9 @@ import java.util.UUID;
  * 在执行目标方法之前，判断用户的登陆状态。并封装传递给目标请求
  *
  * @author 28251
- * springmvc拦截器必须实现HandlerInterceptor接口
+ * 标注组件@Component注解并且springmvc拦截器必须实现HandlerInterceptor接口
  */
+@Component
 public class CartInterceptor implements HandlerInterceptor {
 
     public static ThreadLocal<UserInfoTo> threadLocal = new ThreadLocal<>();
@@ -40,10 +41,10 @@ public class CartInterceptor implements HandlerInterceptor {
         UserInfoTo info = new UserInfoTo();
 
         HttpSession session = request.getSession();
-        MemberResponseVo attribute = (MemberResponseVo) session.getAttribute(AuthServerConstant.LOGIN_USER);
-        if (attribute != null) {
+        MemberResponseVo member = (MemberResponseVo) session.getAttribute(AuthServerConstant.LOGIN_USER);
+        if (member != null) {
             //用户没登录
-            info.setUserId(attribute.getId());
+            info.setUserId(member.getId());
         }
         Cookie[] cookies = request.getCookies();
         if (cookies != null && cookies.length > 0) {

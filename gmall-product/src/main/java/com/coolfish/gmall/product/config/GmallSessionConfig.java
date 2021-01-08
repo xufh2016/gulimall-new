@@ -1,4 +1,4 @@
-package com.coolfish.gmall.auth.config;
+package com.coolfish.gmall.product.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -685,7 +685,7 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
 
 ##缓存与分布式缓存
 
-1. 哪些数据适合放入缓存？
+1. 哪些数据适合放入缓存？(redis是单线程的)
    + 即时性、数据一致性要求不高的
    + 访问量大且更新频率不高的数据（读多，写少）
 2. 缓存的使用
@@ -734,11 +734,11 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
                 <artifactId>lettuce-core</artifactId>
             </exclusion>
         </exclusions>
-    </dependency>
-    <dependency>
-        <groupId>redis.clients</groupId>
-        <artifactId>jedis</artifactId>
-    </dependency>
+   </dependency>
+   <dependency>
+       <groupId>redis.clients</groupId>
+       <artifactId>jedis</artifactId>
+   </dependency>
    ```
    使用redis缓存。要注意查数据库与存缓存要保持原子性。
 6. 使用redis有可能产生的问题
@@ -1221,7 +1221,84 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
    + 不同域名不能共享session
    + 分布式下session共享问题
    + session在集群环境下不同步 
-   
+   1. 解决方案，使用spring session进行session域放大
+       + pom依赖
+         ```xml
+         <dependency>
+             <groupId>org.springframework.session</groupId>
+             <artifactId>spring-session-data-redis</artifactId>
+         </dependency>
+         ```
+       + 在properties文件中做如下配置
+         ```properties
+         #配置springsesion保存类型
+         spring.session.store-type=redis
+         ```
+       + 在主类或redis的配置类上添加注解@EnableRedisHttpSession，如：
+         ```java
+         package com.coolfish.gmall.auth;
+            
+         import org.springframework.boot.SpringApplication;
+         import org.springframework.boot.autoconfigure.SpringBootApplication;
+         import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+         import org.springframework.cloud.openfeign.EnableFeignClients;
+         import org.springframework.session.data.redis.config.annotation.web.http.EnableRedisHttpSession;
+            
+         import java.util.HashSet;
+            
+         /**
+         * 核心原理
+         * 1、@EnableRedisHttpSession 导入了 RedisHttpSessionConfiguration配置
+         * @author 28251
+         * 引入openfeign的时候注意版本冲突
+         */
+         @EnableRedisHttpSession
+         @EnableFeignClients
+         @EnableDiscoveryClient
+         @SpringBootApplication
+         public class GmallAuthServerApplication {
+             public static void main(String[] args) {
+                 SpringApplication.run(GmallAuthServerApplication.class, args);
+             }
+         }
+         ```
+       + 放大作用域及反序列化
+           ```java
+           package com.coolfish.gmall.auth.config;
+           
+           import org.springframework.context.annotation.Bean;
+           import org.springframework.context.annotation.Configuration;
+           import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+           import org.springframework.data.redis.serializer.RedisSerializer;
+           import org.springframework.session.web.http.CookieSerializer;
+           import org.springframework.session.web.http.DefaultCookieSerializer;
+           /**
+            *
+            * @author 28251
+            */
+           @Configuration
+           public class GmallSessionConfig {
+               /**
+                * cookie中存放session，因此放大session的作用域相当于放大cookie的作用域
+                * @return
+                */
+               //
+               @Bean
+               public CookieSerializer cookieSerializer() {
+                   DefaultCookieSerializer cookieSerializer = new DefaultCookieSerializer();
+                   //放大作用域 ，放大到父域名
+                   cookieSerializer.setDomainName("gmall.com");
+                   cookieSerializer.setCookieName("GULISESSION");
+                   return cookieSerializer;
+               }
+               //json 序列化,自定义redis的序列化器
+               @Bean
+               public RedisSerializer<Object> springSessionDefaultRedisSerializer() {
+                   return new GenericJackson2JsonRedisSerializer();
+               }
+           }
+           ```
+       
 
 
 ##多系统单点登录
@@ -1258,6 +1335,7 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
     * @author 28251
     * springmvc拦截器必须实现HandlerInterceptor接口
     */
+   @Component
    public class CartInterceptor implements HandlerInterceptor {
    
        public static ThreadLocal<UserInfoTo> threadLocal = new ThreadLocal<>();
@@ -1323,7 +1401,8 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
        }
    }
    ```
-   并在config包下实现如下配置：
+   要使自定义拦截器工作需要实现WebMvcConfigurer接口，并重写addInterceptors方法，在registry添加拦截请求.  
+   在config包下实现如下配置：
    ```java
    package com.coolfish.gmall.cart.config;
    

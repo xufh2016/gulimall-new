@@ -25,7 +25,7 @@ public class GmallSessionConfig {
     public CookieSerializer cookieSerializer() {
         DefaultCookieSerializer cookieSerializer = new DefaultCookieSerializer();
         //放大作用域
-        cookieSerializer.setDomainName(".gmall.com");
+        cookieSerializer.setDomainName("gmall.com");
         cookieSerializer.setCookieName("GULISESSION");
         return cookieSerializer;
     }

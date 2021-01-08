@@ -27,18 +27,21 @@ class GmallProductApplicationTests {
 
     @Autowired
     StringRedisTemplate stringRedisTemplate;
+
     @Test
-    public  void testRedis(){
+    public void testRedis() {
         ValueOperations<String, String> ops =
                 stringRedisTemplate.opsForValue();
-        ops.set("hello","worker");
+        ops.set("hello", "worker");
         String hello = ops.get("hello");
         System.out.println(hello);
     }
+
     @Autowired
     RedissonClient redissonClient;
+
     @Test
-    public void TestRedisson(){
+    public void TestRedisson() {
         System.out.println(redissonClient);
     }
 
@@ -60,5 +63,6 @@ class GmallProductApplicationTests {
 // 关闭OSSClient。
         ossClient.shutdown();
     }*/
+
 
 }
