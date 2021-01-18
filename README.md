@@ -290,6 +290,19 @@
     ```  
  ##JSR 303
  1. 给bean添加校验规则注解并定义自己的message提示,来源包如下
+    引入包依赖,第一个为基础的验证包，第二个为hibernate提供的附加验证包
+    ```xml
+    <dependency>
+        <groupId>javax.validation</groupId>
+        <artifactId>validation-api</artifactId>
+        <version>2.0.1.Final</version>
+    </dependency>
+    <dependency>
+        <groupId>org.hibernate</groupId>
+        <artifactId>hibernate-validator</artifactId>
+        <version>6.0.9.Final</version>
+    </dependency>
+    ```
     ```java
     import javax.validation.constraints;
     ```
@@ -522,7 +535,7 @@
        **1、@JsonInclude(JsonInclude.Include.NON_EMPTY)注解表示某个字段不为空时，才返回到json对象中**
  6. @Transactional  注解只能应用到 public 可见度的方法上。默认情况下，Spring会对unchecked异常进行事务回滚；如果是checked异常则不回滚。
      通俗一点：你写代码出现的空指针等异常，会被回滚，文件读写，网络出问题，spring就没法回滚了。
-    
+ 7. 
 ##VO
 1.  View Object，用于接收页面传递的数据，封装对象。将业务处理完成的对象，封装成页面要用的对象
 
@@ -1041,6 +1054,58 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
     @Configuration
     @EnableAsync
     public class WebullThreadPoolConfig {
+   /**
+    * 从源码中可以看出，线程池的构造函数有7个参数，分别是corePoolSize、maximumPoolSize、keepAliveTime、unit、workQueue、threadFactory、handler。下面会对这7个参数一一解释。
+    *
+    * 一、corePoolSize 线程池核心线程大小
+    * 线程池中会维护一个最小的线程数量，即使这些线程处理空闲状态，他们也不会 被销毁，除非设置了allowCoreThreadTimeOut。这里的最小线程数量即是corePoolSize。
+    *
+    * 二、maximumPoolSize 线程池最大线程数量
+    * 一个任务被提交到线程池以后，首先会找有没有空闲存活线程，如果有则直接执行，如果没有则会缓存到工作队列（后面会介绍）中，如果工作队列满了，才会创建一个新线程，然后从工作队列的头部取出一个任务交由新线程来处理，
+    * 而将刚提交的任务放入工作队列尾部。线程池不会无限制的去创建新线程，它会有一个最大线程数量的限制，这个数量即由maximunPoolSize指定。
+    *
+    * 三、keepAliveTime 空闲线程存活时间
+    * 一个线程如果处于空闲状态，并且当前的线程数量大于corePoolSize，那么在指定时间后，这个空闲线程会被销毁，这里的指定时间由keepAliveTime来设定
+    *
+    * 四、unit 空闲线程存活时间单位
+    * keepAliveTime的计量单位
+    *
+    * 五、workQueue 工作队列
+    * 新任务被提交后，会先进入到此工作队列中，任务调度时再从队列中取出任务。jdk中提供了四种工作队列：
+    *
+    * ①ArrayBlockingQueue
+    * 基于数组的有界阻塞队列，按FIFO排序。新任务进来后，会放到该队列的队尾，有界的数组可以防止资源耗尽问题。当线程池中线程数量达到corePoolSize后，再有新任务进来，则会将任务放入该队列的队尾，等待被调度。
+    * 如果队列已经是满的，则创建一个新线程，如果线程数量已经达到maxPoolSize，则会执行拒绝策略。
+    *
+    * ②LinkedBlockingQuene
+    * 基于链表的无界阻塞队列（其实最大容量为Interger.MAX），按照FIFO排序。由于该队列的近似无界性，当线程池中线程数量达到corePoolSize后，再有新任务进来，会一直存入该队列，而不会去创建新线程直到maxPoolSize，
+    * 因此使用该工作队列时，参数maxPoolSize其实是不起作用的。
+    *
+    * ③SynchronousQuene
+    * 一个不缓存任务的阻塞队列，生产者放入一个任务必须等到消费者取出这个任务。也就是说新任务进来时，不会缓存，而是直接被调度执行该任务，如果没有可用线程，则创建新线程，如果线程数量达到maxPoolSize，则执行拒绝策略。
+    *
+    * ④PriorityBlockingQueue
+    * 具有优先级的无界阻塞队列，优先级通过参数Comparator实现。
+    *
+    * 六、threadFactory 线程工厂
+    * 创建一个新线程时使用的工厂，可以用来设定线程名、是否为daemon线程等等
+    *
+    * 七、handler 拒绝策略
+    * 当工作队列中的任务已到达最大限制，并且线程池中的线程数量也达到最大限制，这时如果有新任务提交进来，该如何处理呢。这里的拒绝策略，就是解决这个问题的，jdk中提供了4中拒绝策略：
+    *
+    * ①CallerRunsPolicy
+    * 该策略下，在调用者线程中直接执行被拒绝任务的run方法，除非线程池已经shutdown，则直接抛弃任务。
+    * 
+    * ②AbortPolicy
+    * 该策略下，直接丢弃任务，并抛出RejectedExecutionException异常。
+    * 
+    * ③DiscardPolicy
+    * 该策略下，直接丢弃任务，什么都不做。
+    * 
+    * ④DiscardOldestPolicy
+    * 该策略下，抛弃进入队列最早的那个任务，然后尝试把这次拒绝的任务放入队列
+    */
+
         @Bean
         public ExecutorService getAsyncExecutor() {
             /**
@@ -1062,6 +1127,7 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
         }
     }
     ```
+   
 2. 为什么不用另外三个jdk提供的线程池api呢？  
    为了规避资源耗尽的风险。  
 3. 当并发进来时，线程池是这样做的，先执行corepoolsize的任务，再将剩余的线程放到等待队列中，如果等待队列依然容纳不了剩余的线程，则会
@@ -1537,7 +1603,42 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
    + 作用：实现系统启动完后做一些系统初始化的操作。
    
 6. 浏览器对空格“ ”的编译为20%  java对空格的编译为“+”    
-   
+ 
+7. springboot整合redis时，连接正常，但取不到数据的问题解决方式：  
+   取不到数据的原因是：  
+   如果key没做序列化存储，实际存进去的key前面会多几个字符，如果你用redis客户端查询你想要的key，  
+   最好在程序里对key进行序列化，这样最终的key值才是你想要的key,redisTemplate下面有这两个属性
+   ```xml
+    <property name="keySerializer">  
+        	<bean class="org.springframework.data.redis.serializer.StringRedisSerializer" />  
+    </property>   
+    <property name="hashKeySerializer">  
+        <bean class="org.springframework.data.redis.serializer.StringRedisSerializer" />  
+    </property> 
+   ```
+   解决方案是：在springboot中必须去自定义实现redis的序列化
+   如下面方式：
+  ```java
+    @Configuration
+    public class RedisConfig {
+    
+        @Bean
+        JedisConnectionFactory jedisConnectionFactory() {
+            return new JedisConnectionFactory();
+        }
+    
+        @Bean
+        public <T> RedisTemplate<String, T> redisTemplate(RedisConnectionFactory factory) {
+            RedisTemplate<String, T> template = new RedisTemplate<String, T>();
+            template.setConnectionFactory(factory);
+    //1.序列化key
+            template.setKeySerializer(new StringRedisSerializer());//spring自带
+    //2.序列划value
+            template.setValueSerializer(new RedisObjectSerializer());//自定义
+            return template;
+        }
+    }
+  ```
    
 #Spring Boot
 
