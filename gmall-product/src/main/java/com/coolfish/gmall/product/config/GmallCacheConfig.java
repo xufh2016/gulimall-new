@@ -11,16 +11,17 @@ import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 @EnableConfigurationProperties(CacheProperties.class)
 @Configuration
 @EnableCaching
 public class GmallCacheConfig {
     @Autowired
-    CacheProperties cacheProperties;
+     CacheProperties cacheProperties;
     @Bean
     RedisCacheConfiguration redisCacheConfiguration() {
         RedisCacheConfiguration redisCacheConfiguration = RedisCacheConfiguration.defaultCacheConfig();
-        //redisCacheConfiguration = redisCacheConfiguration.entryTtl();
         redisCacheConfiguration = redisCacheConfiguration.serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()));
         redisCacheConfiguration = redisCacheConfiguration.serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericFastJsonRedisSerializer()));
         //将配置文件中的所有配置都生效
