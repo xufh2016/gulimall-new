@@ -15,6 +15,7 @@ import com.coolfish.gmall.ware.service.WareInfoService;
 import com.coolfish.common.utils.PageUtils;
 import com.coolfish.common.utils.R;
 
+import javax.websocket.server.PathParam;
 
 
 /**
@@ -79,6 +80,10 @@ public class WareInfoController {
 		wareInfoService.removeByIds(Arrays.asList(ids));
 
         return R.ok();
+    }
+    @RequestMapping("/testhello/{name}")
+    public String testPathParamAnn(@PathParam("name")String name){
+       return  name;
     }
 
 }

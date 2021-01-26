@@ -1650,10 +1650,34 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
   spring-boot-starter-web默认引入了jackson的相关包。 
 #Spring Boot
 
-
-   
-
-
+1. 遇到的注解 @QueryParam和@PathParam ，这两个注解是javax.websocket.server下的注解，也就是说是websocket的注解
+   * @QueryParam 主要通过键值对这样取 如 a=1     QueryParam("a")
+     如  localhost:8080/introduction?bookId=1?gg=2?version=3?platform=4?vps=5
+     此时我们就用QueryParam   通过@QueryParam("bookId") Integer bookId 
+     ```java
+        @GET
+        @Path("/introduction")
+        Response introduction(
+                @QueryParam("bookId") Integer bookId,
+                @QueryParam("gg") Integer gg,
+                @QueryParam("version") String version,
+                @QueryParam("platform") String platform,
+                @QueryParam("vps") String vps
+        );
+     ```
+     
+   * @PathParam   主要通过路径映射取(后面解
+     localhost:8080/introduction/1/2/3/4/5  对应下面的  /{bookId}/{gg}/{version}/{plarform}/{vps}  
+     ```java
+        @GET
+        Response introduction(
+                @PathParam ("bookId") Integer bookId,
+                @PathParam ("gg") Integer gg,
+                @PathParam ("version") String version,
+                @PathParam ("platform") String platform,
+                @PathParam ("vps") String vps
+        );
+     ```
 
 
 
@@ -1866,4 +1890,182 @@ int i = 10;
 6. final的重排序规则（被final关键字修饰的域被称为final域）
    + 在构造函数内对一个final域的写入，与随后把这个被构造对象的引用赋值给一个引用变量，这两个操作之间不能重排序。
    + 初次读一个包含final域的对象的引用，与随后初次读这个final域，这两个操作之间不能重排序。
+   
+   
+   
+   
+   
+
+
+
+
+
+#TCP/IP协议族
+1. TCP：建立连接需要三次握手，而断开连接则需要四次握手，这是因为TCP的办关闭造成的。
+2. TCP断开连接的流程：
+   * 某个应用进程首先调用close，称该端执行“主动关闭”（active close）。该端的TCP于是发送一个FIN分节，表示数据发送完毕。
+   * 接收到这个FIN的对端执行“被动关闭”，这个FIN由TCP确认
+   * 一段时间后，接受到这个文件结束符的应用进程将调用close关闭他的套接字。这导致TCP也发送一个FIN。
+   * 接收这个最终FIN的原发送端TCP确认这个FIN。既然每个方向都需要一个FIN和一个ACK，因此通常需要4个分节。
+3. TCP、UDP
+   * TCP协议是面向连接的、可靠的、基于字节流的传输层通信协议。
+   * UDP面向事务的简单不可靠信息传送服务
+   * TCP和UDP的区别
+     1. TCP用于在传输层有必要实现可靠传输的情况。由于它是面向有链接并具备顺序控制、重发控制等机制的，所以他可以为应用提供可靠的传输
+     2. UDP主要用于那些对高速传输和实时性有较高要求的通信或广播通信，多播或广播通信中也用的UDP
+     
+##Websocket
+1. socket原理
+   * Socket连接，至少需要一堆套接字，分别为clientSocket、serverSocket连接分为3个步骤：
+     1. 服务器监听：服务器并不定位具体客户端的套接字，而是时刻处于监听状态；
+     2. 客户端请求：客户端的套接字要描述它要连接的服务器的套接字，提供地址和端口号，然后向服务器套接字提出连接请求；
+     3. 连接确认：当服务器套接字收到客户端套接字发来的请求后，就响应客户端套接字的请求，并建立一个新的线程，把服务器端的套接字的
+        描述发给客户端。一旦客户端确认了此描述，就正式建立连接。而服务器套接字继续处于监听状态，继续接受其他客户端套接字的连接请求
+   * Socket为长连接：通常情况下Socket连接就是TCP连接，因此Socket连接一旦建立，通讯双方开始护发数据内容，直到双方断开连接。在实际
+     应用中，由于网络节点过多，在传输过程中，会被节点断开连接，因此要通过轮询高速网络，该节点处于活跃状态。  
+     很多情况下，都需要服务器端想客户端主动推送数据，保持客户端与服务端的实现同步。  
+     若双方都是Socket连接，可以由服务器直接向客户端发送数据。  
+   * 网络模型（七层）中的部分协议
+     1. HTTP 协议：超文本传输协议，对应于应用层，用于如何封装数据。
+     2. TCP/UDP 协议：传输控制协议，对应于传输层，主要解决数据在网络中的传输。
+     3. IP 协议：对应于网络层，同样解决数据在网络中的传输。
+   
+     
+2. Websockt相关知识
+   1. WebSocket是html5开始提供的一种在单个TCP连接上进行全双工通信的协议  
+      WebSocket使得客户端和服务器之间的数据交换变得更简单，允许服务端主动向客户端推送数据。在 WebSocket API 中，浏览器和服务器
+      只需要完成一次握手，两者之间就直接可以创建持久性的连接，并进行双向数据传输。
+      
+      
+   * 一个Websocket客户端是一个Websocket终端，它初始化了一个到对方的连接。一个Websocket服务器也是一个Websocket终端，它被发布出  
+     去并且等待来自对方的连接。在客户端和服务器端都有回调监听方法 -- onOpen、onMessage、onError、onClose。
+   * 如何玩Websocket？
+     基本上我们还是会使用JavaScript API编写Websocket客户端，在服务器端可以使用JSR356规范定义的通用模式和技术处理Websocket的通讯  
+     前端实现websocket
+     ```html
+        <html>
+            <head>
+                <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+            </head>
+         
+            <body>
+                <meta charset="utf-8">
+                <title>HelloWorld Web sockets</title>
+                <script language="javascript" type="text/javascript">
+                    var wsUri = getRootUri() + "/websocket-hello/hello";
+         
+                    function getRootUri() {
+                        return "ws://" + (document.location.hostname == "" ? "localhost" : document.location.hostname) + ":" +
+                                (document.location.port == "" ? "8080" : document.location.port);
+                    }
+         
+                    function init() {
+                        output = document.getElementById("output");
+                    }
+         
+                    function send_message() {
+         
+                        websocket = new WebSocket(wsUri);
+                        websocket.onopen = function(evt) {
+                            onOpen(evt)
+                        };
+                        websocket.onmessage = function(evt) {
+                            onMessage(evt)
+                        };
+                        websocket.onerror = function(evt) {
+                            onError(evt)
+                        };
+         
+                    }
+         
+                    function onOpen(evt) {
+                        writeToScreen("Connected to Endpoint!");
+                        doSend(textID.value);
+         
+                    }
+         
+                    function onMessage(evt) {
+                        writeToScreen("Message Received: " + evt.data);
+                    }
+         
+                    function onError(evt) {
+                        writeToScreen('<span style="color: red;">ERROR:</span> ' + evt.data);
+                    }
+         
+                    function doSend(message) {
+                        writeToScreen("Message Sent: " + message);
+                        websocket.send(message);
+                    }
+         
+                    function writeToScreen(message) {
+                        var pre = document.createElement("p");
+                        pre.style.wordWrap = "break-word";
+                        pre.innerHTML = message;
+                          
+                        output.appendChild(pre);
+                    }
+         
+                    window.addEventListener("load", init, false);
+         
+                </script>
+         
+                <h1 style="text-align: center;">Hello World WebSocket Client</h2>
+         
+                <br>
+         
+                <div style="text-align: center;">
+                    <form action="">
+                        <input onclick="send_message()" value="Send" type="button">
+                        <input id="textID" name="message" value="Hello WebSocket!" type="text"><br>
+                    </form>
+                </div>
+                <div id="output"></div>
+        </body>
+        </html>
+     ```
+     如你所见，要想使用WebSocket协议与服务器通信, 需要一个WebSocket对象。它会自动连接服务器.
+     ```js
+     websocket = new WebSocket(wsUri);
+     ```
+     连接上会触发open事件：
+     ```js
+      websocket.onopen = function(evt) {
+             onOpen(evt)
+      };
+     ```
+     一旦连接成功，则向服务器发送一个简单的hello消息。
+     ```js
+     websocket.send(message);
+     ```
+   服务器端代码  
+   有两种创建服务器端代码的方法：
+   1. 注解方式Annotation-driven：通过POJO加上注解，开发者就可以处理Websocket声明周期时间
+   2. 实现接口方式Interface-driven：开发者可以实现Endpoint接口和生命周期的各个方法  
+      建议开发时采用注解方式， 这样可以使用POJO就可以实现WebSocket Endpoint. 而且不限定处理事件的方法名。 代码也更简单。  
+      本例就采用注解的方式， 接收WebSocket请求的类是一个POJO, 通过@ServerEndpoint标注. 这个注解告诉容器此类应该被当作一个
+      WebSocket的Endpoint。value值就是WebSocket endpoint的path.
+      ```java
+        package com.sample.websocket;
+        import javax.websocket.*;
+        import javax.websocket.server.ServerEndpoint;
+      
+        @ServerEndpoint("/hello")
+        public class HelloWorldEndpoint {
+            @OnMessage
+            public String hello(String message) {
+                System.out.println("Received : "+ message);
+                return message;
+            }
+            @OnOpen
+            public void myOnOpen(Session session) {
+                System.out.println("WebSocket opened: " + session.getId());
+            }
+            @OnClose
+            public void myOnClose(CloseReason reason) {
+                System.out.println("Closing a WebSocket due to " + reason.getReasonPhrase());
+            }
+        }
+      ```
+      @OnOpen标注的方法在Websocket连接开始时被调用， Session作为参数。另外一个@OnClose标注的方法在连接关闭时被调用。
+      
    
