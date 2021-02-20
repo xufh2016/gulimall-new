@@ -4,6 +4,11 @@ spring:
     password: root
     url: jdbc:mysql://localhost:3306/guli_oms
     driver-class-name: com.mysql.cj.jdbc.Driver
+  rabbitmq:
+    addresses: 192.168.0.84
+    port: 5672
+    virtual-host: /
+
 mybatis-plus:
   mapper-locations: classpath:/mapper/**/*.xml
 #  配置主键自增

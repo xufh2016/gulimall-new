@@ -1502,6 +1502,46 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
    通常情况下，我们创建的变量是可以被任何一个线程访问并修改的。而使用ThreadLocal创建的变量只能被当前线程访问，其他线程则无法访问
    和修改。
 
+
+##RabbitMQ
+1. 核心概念 
+   + message broker消息代理，简单理解就是安装了消息中间件的服务器
+     
+   + destination 目的地，就是消息要发送到哪
+   
+   + 消息队列，主要有两种形式的目的地
+     + 队列（queue）：点对点消息通信（point2point）
+     + 主题（topic）：发布/订阅
+   + 点对点方式：
+     + 消息发送者发送消息，消息代理将其放入一个队列中，消息接收者从队列中获取消息内容，消息读取后被移除队列
+     + 消息只有唯一的发送者和接受者，但并不是说只能有一个接收者
+   + 发布订阅
+     + 发送者发送消息到主题，多个接收者监听这个主题，那么就会在消息到达时同时收到消息
+   + Publisher  
+   
+   + Message  
+     消息有头和体，并包含一个重要信息route-key路由键
+   + Broker  
+   
+   + Exchange  
+     交换机，分发消息时根据类型的不同分发策略有区别，目前共有四种类型：direct、fanout、topic、headers。headers匹配AMQP消息的
+     header而不是路由键，headers交换机和direct交换机完全一致，但性能差很多，目前几乎用不到，
+     + direct交换机   精确匹配   路由键精确匹配队列   单播模式也称为点对点通信
+     + fanout         也是发布订阅模式的，不过是广播模式，不关心路由键，会把接受到的消息广播给所有绑定到该交换机上的队列
+     + topic          发布订阅模式。支持通配符，#匹配0个或多个单词，*匹配一个单词
+     + headers        性能差，基本不用了  
+     其中direct和headeers一致，都是点对点的通信
+   
+2. docker 安装RabbitMQ  
+   docker run -d --name gmall-rabbitmq -p 5671:5671 -p 5672:5672 -p 4369:4369 -p 25672:25672 -p 15671:15671 -p 15672:15672 rabbitmq:management  
+   
+   + 4369，25672  Erlang发现和集群端口
+   + 5672、5671   AMQP端口
+   + 15672        web管理后台端口
+   + 61613、61614 STOMP协议端口
+   + 1883、8883   MQTT协议端口
+3. 发消息是发给交换机，监听消息是来监听队列，然后交换机把消息交给队列
+
 ##Java线程与硬件处理器
 在Window系统和Linux系统上，Java线程的实现是基于一对一的线程模型，所谓的一对一模型，实际上就是通过语言级别层面程序去间接调用系统
 内核的线程模型，即我们在使用Java线程时，Java虚拟机内部是转而调用当前操作系统的内核线程来完成当前任务。这里需要了解一个术语，内核
@@ -1936,7 +1976,6 @@ int i = 10;
       WebSocket使得客户端和服务器之间的数据交换变得更简单，允许服务端主动向客户端推送数据。在 WebSocket API 中，浏览器和服务器
       只需要完成一次握手，两者之间就直接可以创建持久性的连接，并进行双向数据传输。
       
-      
    * 一个Websocket客户端是一个Websocket终端，它初始化了一个到对方的连接。一个Websocket服务器也是一个Websocket终端，它被发布出  
      去并且等待来自对方的连接。在客户端和服务器端都有回调监听方法 -- onOpen、onMessage、onError、onClose。
    * 如何玩Websocket？
@@ -1947,13 +1986,11 @@ int i = 10;
             <head>
                 <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
             </head>
-         
             <body>
                 <meta charset="utf-8">
                 <title>HelloWorld Web sockets</title>
                 <script language="javascript" type="text/javascript">
                     var wsUri = getRootUri() + "/websocket-hello/hello";
-         
                     function getRootUri() {
                         return "ws://" + (document.location.hostname == "" ? "localhost" : document.location.hostname) + ":" +
                                 (document.location.port == "" ? "8080" : document.location.port);
@@ -1964,7 +2001,6 @@ int i = 10;
                     }
          
                     function send_message() {
-         
                         websocket = new WebSocket(wsUri);
                         websocket.onopen = function(evt) {
                             onOpen(evt)
@@ -1996,7 +2032,6 @@ int i = 10;
                         writeToScreen("Message Sent: " + message);
                         websocket.send(message);
                     }
-         
                     function writeToScreen(message) {
                         var pre = document.createElement("p");
                         pre.style.wordWrap = "break-word";
@@ -2004,15 +2039,11 @@ int i = 10;
                           
                         output.appendChild(pre);
                     }
-         
                     window.addEventListener("load", init, false);
          
                 </script>
-         
                 <h1 style="text-align: center;">Hello World WebSocket Client</h2>
-         
                 <br>
-         
                 <div style="text-align: center;">
                     <form action="">
                         <input onclick="send_message()" value="Send" type="button">
@@ -2068,4 +2099,222 @@ int i = 10;
       ```
       @OnOpen标注的方法在Websocket连接开始时被调用， Session作为参数。另外一个@OnClose标注的方法在连接关闭时被调用。
       
+##Java8中的Optional
+1. Optional容器类  
+   这是一个可以为null的容器对象。如果值存在则isPresent()方法会返回true，调用get()方法会返回该对象。
+   + of：为非null的值创建一个Optional
+   + ofNullable：为指定的值创建一个Optional，如果指定的值为null，则返回一个空的Optional
+   + isPresent：如果值存在返回true，否则返回false
+   + get：如果Optional有值则将其返回，否则抛出NoSuchElementException
+   + ifPresent：如果Optional实例有值则为其调用Consumer，否则不做处理
+   + orElse：如果有值则将其返回，否则返回指定的其他值   
+   + orElseGet：orElseGet与orElse方法类似、区别在于得到的默认值。orElse方法将传入的字符串作为默认值，orElseGet方法可以接受
+     Supplier接口的实现用来生成默认值。
+   + orElseThrow：如果有值则将其返回，否则抛出Supplier接口创建的异常
+   + map：如果有值，则对其执行调用mapping函数得到返回值。如果返回值不为null，则创建包含mapping返回值的Optional作为map方法返回值，
+     否则返回空Optional。(简单讲就是返回想要的数据，类比list.stream().map()方法)
+   + flatMap： 如果有值，为其执行mapping函数返回Optional类型返回值，否则返回空Optional。flatMap与map
    
+##AOP
+1. Aspect(切面)  
+   aspect由pointcut和advice组成，它既包含了横切逻辑的定义，也包括了连接点的定义。Aop的工作重心在于如何将增强织入目标对象的连接上
+   包含两个工作：
+   + 如何通过pointcut和advice定位到特定的joinpoint上
+   + 如何在advice中编写切面代码  
+   可以简单的理解：*使用了@Aspect注解的类就是切面*
+2. advice（增强） ，白话点讲就是指使用@Aspect注解的类中的方法
+   由 aspect 添加到特定的 join point(即满足 point cut 规则的 join point) 的一段代码。  
+   许多 AOP框架， 包括 Spring AOP， 会将 advice 模拟为一个拦截器(interceptor)， 并且在 join point 上维护多个 advice， 进行层
+   层拦截。
+   + before advice， 在 join point 前被执行的 advice. 虽然 before advice 是在 join point 前被执行， 但是它并不能够阻止 
+     join point 的执行， 除非发生了异常(即我们在 before advice 代码中， 不能人为地决定是否继续执行 join point 中的代码)
+   + after return advice， 在一个 join point 正常返回后执行的 advice
+   + after throwing advice， 当一个 join point 抛出异常后执行的 advice
+   + after(final) advice， 无论一个 join point 是正常退出还是发生了异常， 都会被执行的 advice.
+   + around advice， 在 join point 前和 joint point 退出后都执行的 advice. 这个是最常用的 advice.
+   
+3. 连接点（join point）  
+   程序运行中的一些时间点，例如一个方法的执行，或者是一个异常的处理。  
+   在spring AOP中，join point总是方法的执行点，即只有方法连接点。
+4. 切点（point cut）
+   匹配join point的谓词。Advice 是和特定的 point cut 关联的， 并且在 point cut 相匹配的 join point 中执行。  
+   在spring中，所有的方法都可以认为是joinpoint，但我们并不希望在所有的方法上添加Advice
+   @Pointcut  @Around  @After   @Before 等都是pointcut  
+5. join point和point cut的区别  
+   在Spring AOP中，所有的方法执行都是join point，而point cut是一个描述，它修饰join point，通过point cut，可以确定哪些join point
+   可以被织入advice。advice是在join point上执行的，而point cut规定了哪些join point可以执行哪些advice。   
+6. 声明pointcut  
+   一个pointcut的声明由两部分组成
+   + 一个方法签名，包括方法名和相关参数
+   + 一个pointcut表达式，用来指定哪些方法执行是我们感兴趣的（即因此可以织入advice）  
+   在@AspectJ 风格的 AOP 中， 我们使用一个方法来描述 pointcut， 即:
+   ```java
+    @Pointcut("execution(* com.xys.service.UserService.*(..))") // 切点表达式
+    private void dataAccessOperation() {} // 切点前面
+   ```
+   这个方法必须无返回值。  
+   这个方法本身就是 pointcut signature， pointcut 表达式使用@Pointcut 注解指定。  
+   上面我们简单地定义了一个 pointcut， 这个 pointcut 所描述的是: 匹配所有在包 com.xys.service.UserService 下的所有方法的执行。
+   1. 切点标志符(designator)
+      + execution  
+        匹配 join point 的执行， 例如 "execution(* hello(..))" 表示匹配所有目标类中的 hello() 方法. 这个是最基本的 pointcut 
+        标志符。
+      + within  
+        匹配特定包下的所有 join point， 例如 within(com.xys.*) 表示 com.xys 包中的所有连接点， 即包中的所有类的所有方法. 而 
+        within(com.xys.service.*Service) 表示在 com.xys.service 包中所有以 Service 结尾的类的所有的连接点。
+      + this 与 target  
+        this 的作用是匹配一个 bean， 这个 bean(Spring AOP proxy) 是一个给定类型的实例(instance of). 而 target 匹配的是一个目
+        标对象(target object， 即需要织入 advice 的原始的类)， 此对象是一个给定类型的实例(instance of)。
+      + bean  
+        匹配bean名字为指定值的bean下的所有方法，例如：
+        ```java
+        bean(*Service) // 匹配名字后缀为 Service 的 bean 下的所有方法
+        bean(myService) // 匹配名字为 myService 的 bean 下的所有方法
+        ```
+      + args  
+        匹配参数满足要求的方法，例如
+        ```java
+        @Pointcut("within(com.xys.demo2.*)")
+        public void pointcut2() {
+        }
+        
+        @Before(value = "pointcut2()  &&  args(name)")
+        public void doSomething(String name) {
+            logger.info("---page: {}---"， name);
+        }
+        @Service
+        public class NormalService {
+            private Logger logger = LoggerFactory.getLogger(getClass());
+        
+            public void someMethod() {
+                logger.info("---NormalService: someMethod invoked---");
+            }
+            public String test(String name) {
+                logger.info("---NormalService: test invoked---");
+                return "服务一切正常";
+            }
+        }
+        ```
+        当 NormalService.test 执行时， 则 advice doSomething 就会执行， test 方法的参数 name 就会传递到 doSomething 中。  
+        常用例子:
+        ```java
+        // 匹配只有一个参数 name 的方法
+        @Before(value = "aspectMethod()  &&  args(name)")
+        public void doSomething(String name) {
+        }
+        
+        // 匹配第一个参数为 name 的方法
+        @Before(value = "aspectMethod()  &&  args(name， ..)")
+        public void doSomething(String name) {
+        }
+        
+        // 匹配第二个参数为 name 的方法
+        Before(value = "aspectMethod()  &&  args(*， name， ..)")
+        public void doSomething(String name) {
+        }
+        ```
+      + @annotation  
+        匹配由指定注解所标注的方法，例如:
+        ```java
+        @Pointcut("@annotation(com.xys.demo1.AuthChecker)")
+        public void pointcut() {
+        }
+        ```
+   2. 常见的切点表达式
+      + 匹配方法签名
+        ```java
+        // 匹配指定包中的所有的方法
+        execution(* com.xys.service.*(..))
+        
+        // 匹配当前包中的指定类的所有方法
+        execution(* UserService.*(..))
+        
+        // 匹配指定包中的所有 public 方法
+        execution(public * com.xys.service.*(..))
+        
+        // 匹配指定包中的所有 public 方法， 并且返回值是 int 类型的方法
+        execution(public int com.xys.service.*(..))
+        
+        // 匹配指定包中的所有 public 方法， 并且第一个参数是 String， 返回值是 int 类型的方法
+        execution(public int com.xys.service.*(String name， ..))
+        ```
+      + 匹配类型签名
+        ```java
+        // 匹配指定包中的所有的方法， 但不包括子包
+        within(com.xys.service.*)
+        
+        // 匹配指定包中的所有的方法， 包括子包
+        within(com.xys.service..*)
+        
+        // 匹配当前包中的指定类中的方法
+        within(UserService)
+        
+        // 匹配一个接口的所有实现类中的实现的方法
+        within(UserDao+)
+        ```
+      + 匹配bean名字
+        ```java
+        // 匹配以指定名字结尾的 Bean 中的所有方法
+        bean(*Service)
+        ```
+      + 切点表达式组合
+        ```java
+        // 匹配以 Service 或 ServiceImpl 结尾的 bean
+        bean(*Service || *ServiceImpl)
+        
+        // 匹配名字以 Service 结尾， 并且在包 com.xys.service 中的 bean
+        bean(*Service) && within(com.xys.service.*)
+        ```
+   3. 声明advice  
+      advice 是和一个 pointcut 表达式关联在一起的， 并且会在匹配的 join point 的方法执行的前/后/周围 运行. pointcut 表达式可
+      以是简单的一个 pointcut 名字的引用， 或者是完整的 pointcut 表达式。
+      例如：
+      + Before advice
+        ```java
+        @Component
+        @Aspect
+        public class BeforeAspectTest {
+            // 定义一个 Pointcut， 使用 切点表达式函数 来描述对哪些 Join point 使用 advise.
+            @Pointcut("execution(* com.xys.service.UserService.*(..))")
+            public void dataAccessOperation() {
+            }
+        }
+        @Component
+        @Aspect
+        public class AdviseDefine {
+            // 定义 advise
+            @Before("com.xys.aspect.PointcutDefine.dataAccessOperation()")
+            public void doBeforeAccessCheck(JoinPoint joinPoint) {
+                System.out.println("*****Before advise， method: " + joinPoint.getSignature().toShortString() + " *****");
+            }
+        }
+        ```
+      + around advice
+        ```java
+        @Component
+        @Aspect
+        public class AdviseDefine {
+            // 定义 advise
+            @Around("com.xys.aspect.PointcutDefine.dataAccessOperation()")
+            public Object doAroundAccessCheck(ProceedingJoinPoint pjp) throws Throwable {
+                StopWatch stopWatch = new StopWatch();
+                stopWatch.start();
+                // 开始
+                Object retVal = pjp.proceed();
+                stopWatch.stop();
+                // 结束
+                System.out.println("invoke method: " + pjp.getSignature().getName() + "， elapsed time: " + stopWatch.getTotalTimeMillis());
+                return retVal;
+            }
+        }
+        ```
+      + @Around:在切点方法外环绕执行
+        + 在增强的方法上@Around("execution(* 包名.*(..))")或使用切点@Around("pointcut()")
+        + 接收参数类型为ProceedingJoinPoint，必须有这个参数在切面方法的入参第一位
+        + 返回值为Object
+        + 需要执行ProceedingJoinPoint对象的proceed方法，在这个方法前与后面做环绕处理，可以决定何时执行与完全阻止方法的执行
+        + 返回proceed方法的返回值
+        + @Around相当于@Before和@AfterReturning功能的总和
+        + 可以改变方法参数，在proceed方法执行的时候可以传入Object[]对象作为参数，作为目标方法的实参使用。
+        + 如果传入Object[]参数与方法入参数量不同或类型不同，会抛出异常
+        + 通过改变proceed()的返回值来修改目标方法的返回值
