@@ -2117,6 +2117,7 @@ int i = 10;
    
 ##AOP
 1. Aspect(切面)  
+   @Aspect注解：将一个类定义为一个切面类。  
    aspect由pointcut和advice组成，它既包含了横切逻辑的定义，也包括了连接点的定义。Aop的工作重心在于如何将增强织入目标对象的连接上
    包含两个工作：
    + 如何通过pointcut和advice定位到特定的joinpoint上
@@ -2318,3 +2319,93 @@ int i = 10;
         + 可以改变方法参数，在proceed方法执行的时候可以传入Object[]对象作为参数，作为目标方法的实参使用。
         + 如果传入Object[]参数与方法入参数量不同或类型不同，会抛出异常
         + 通过改变proceed()的返回值来修改目标方法的返回值
+   4. 利用自定义注解和切面实现的环绕增强demo
+      ```java
+      package com.webull.aop;
+      
+      import com.google.common.cache.Cache;
+      import com.google.common.cache.CacheBuilder;
+      import com.webull.annotation.LocalResubmitLock;
+      import com.webull.common.R;
+      import org.aspectj.lang.ProceedingJoinPoint;
+      import org.aspectj.lang.annotation.Around;
+      import org.aspectj.lang.annotation.Aspect;
+      import org.aspectj.lang.reflect.MethodSignature;
+      import org.springframework.context.annotation.Configuration;
+      import org.springframework.util.StringUtils;
+      
+      import java.lang.reflect.Method;
+      import java.util.concurrent.TimeUnit;
+      
+      //@Order(1)//这个注解的作用是:标记切面类的处理优先级,i值越小,优先级别越高.PS:可以注解类,也能注解到方法上
+      @Aspect //将该类定义为一个切面类
+      @Configuration //将切面类加入到IOC容器中，由spring框架管理
+      public class ResubmitLockIntercepter {
+          //定义缓存，设置最大缓存数及过期日期
+          private static final Cache<String,Object> CACHE = CacheBuilder.newBuilder().maximumSize(1000).expireAfterWrite(20, TimeUnit.SECONDS).build();
+      
+          @Around("execution(public * *(..))  && @annotation(com.webull.annotation.LocalResubmitLock)")
+          public Object interceptor(ProceedingJoinPoint joinPoint){
+              MethodSignature signature = (MethodSignature) joinPoint.getSignature();
+              Method method = signature.getMethod();
+              LocalResubmitLock localResubmitLock = method.getAnnotation(LocalResubmitLock.class);
+              String key = getKey(localResubmitLock.key(),joinPoint.getArgs());
+              if(!StringUtils.isEmpty(key)){
+                  if(CACHE.getIfPresent(key) != null){
+                      return R.error("请勿重复提交");
+                  }
+                  CACHE.put(key,key);
+              }
+              try{
+                  return joinPoint.proceed();
+              }catch (Throwable throwable){
+                  throw new RuntimeException("服务器异常");
+              }finally {
+      
+              }
+          }
+      
+          private String getKey(String keyExpress, Object[] args){
+              for (int i = 0; i < args.length; i++) {
+                  keyExpress = keyExpress.replace("target[" + i + "]", args[i].toString());
+              }
+              return keyExpress;
+          }
+      }
+      ```    
+      ```java
+
+        import java.lang.annotation.*;
+        
+        /**
+         * @author 28251
+         * 防止重复提交的注解
+         */
+        @Target({ElementType.METHOD})
+        @Retention(RetentionPolicy.RUNTIME)
+        @Documented
+        @Inherited
+        public @interface LocalResubmitLock {
+            String key() default "";
+        }      
+      ```
+      ```java
+        /**
+         * 保存
+         */
+        @LocalResubmitLock(key = "resubmitLock:webull:target[0]")
+        @PostMapping
+        @ApiOperation("保存公告表（用户公告、系统公告）")
+        public R save(@RequestBody NoticeEntity notice) {
+            try {
+                String username = LoginUserUtil.getLoginUser().getUsername();
+                notice.setCreatedBy(username);
+                notice.setCreateTime(new Date());
+                noticeService.save(notice);
+            } catch (Exception e) {
+                return R.error(e.getMessage());
+            }
+            return R.ok();
+        }
+      ```
+   

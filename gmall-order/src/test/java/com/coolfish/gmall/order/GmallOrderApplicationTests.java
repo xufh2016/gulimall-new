@@ -40,7 +40,7 @@ class GmallOrderApplicationTests {
     @Test
     void createExchange() {
         DirectExchange directExchange = new DirectExchange("hello-java-exchange", true, false, null);
-
+        amqpAdmin.declareExchange(directExchange);
 //        new DefaultSingletonBeanRegistry()
 
 

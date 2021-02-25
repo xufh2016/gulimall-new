@@ -1,7 +1,9 @@
 package com.coolfish.gmall.order;
 
+import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 
 /**
  * 使用rabbitmq步骤：
@@ -11,7 +13,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * 4.使用注解@EnableRabbit 开启Rabbitmq使用
  */
 @SpringBootApplication
-
+//@EnableDiscoveryClient
+@EnableRabbit
 public class GmallOrderApplication {
 
     public static void main(String[] args) {

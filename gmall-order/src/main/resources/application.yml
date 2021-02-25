@@ -8,6 +8,13 @@ spring:
     addresses: 192.168.0.84
     port: 5672
     virtual-host: /
+#    开启发送端确认
+    publisher-confirms: true
+#    开启发送端消息抵达队列的确认
+    publisher-returns: true
+#    只要抵达队列，以异步发送优先回调我们这个returnconfirm
+    template:
+      mandatory: true
 
 mybatis-plus:
   mapper-locations: classpath:/mapper/**/*.xml
