@@ -739,14 +739,14 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
    可以这样修改，使用jedis客户端。
    ```xml
    <dependency>
-     <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-starter-data-redis</artifactId>
-        <exclusions>
-            <exclusion>
-                <groupId>io.lettcue</groupId>
-                <artifactId>lettuce-core</artifactId>
-            </exclusion>
-        </exclusions>
+       <groupId>org.springframework.boot</groupId>
+       <artifactId>spring-boot-starter-data-redis</artifactId>
+       <exclusions>
+           <exclusion>
+               <groupId>io.lettcue</groupId>
+               <artifactId>lettuce-core</artifactId>
+           </exclusion>
+       </exclusions>
    </dependency>
    <dependency>
        <groupId>redis.clients</groupId>
@@ -1542,6 +1542,10 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
    + 1883、8883   MQTT协议端口
 3. 发消息是发给交换机，监听消息是来监听队列，然后交换机把消息交给队列
 
+
+
+
+
 ##Java线程与硬件处理器
 在Window系统和Linux系统上，Java线程的实现是基于一对一的线程模型，所谓的一对一模型，实际上就是通过语言级别层面程序去间接调用系统
 内核的线程模型，即我们在使用Java线程时，Java虚拟机内部是转而调用当前操作系统的内核线程来完成当前任务。这里需要了解一个术语，内核
@@ -2315,7 +2319,7 @@ int i = 10;
         + 返回值为Object
         + 需要执行ProceedingJoinPoint对象的proceed方法，在这个方法前与后面做环绕处理，可以决定何时执行与完全阻止方法的执行
         + 返回proceed方法的返回值
-        + @Around相当于@Before和@AfterReturning功能的总和
+        + @Around相当于@Before和@AfterReturning功能的总和，*@Around注解标注的方法中必须有JoinPoint类型的形参*
         + 可以改变方法参数，在proceed方法执行的时候可以传入Object[]对象作为参数，作为目标方法的实参使用。
         + 如果传入Object[]参数与方法入参数量不同或类型不同，会抛出异常
         + 通过改变proceed()的返回值来修改目标方法的返回值
@@ -2343,7 +2347,7 @@ int i = 10;
       public class ResubmitLockIntercepter {
           //定义缓存，设置最大缓存数及过期日期
           private static final Cache<String,Object> CACHE = CacheBuilder.newBuilder().maximumSize(1000).expireAfterWrite(20, TimeUnit.SECONDS).build();
-      
+          //@Around注解：定义了切点，此处的切点是：被public修饰的所有方法，同时还得标注自定义注解@LocalResubmitLock
           @Around("execution(public * *(..))  && @annotation(com.webull.annotation.LocalResubmitLock)")
           public Object interceptor(ProceedingJoinPoint joinPoint){
               MethodSignature signature = (MethodSignature) joinPoint.getSignature();

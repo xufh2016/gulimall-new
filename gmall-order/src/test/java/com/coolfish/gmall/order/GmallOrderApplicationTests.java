@@ -60,4 +60,15 @@ class GmallOrderApplicationTests {
         log.info("Binding[{}]创建成功", "hello-java-binding");
     }
 
+//
+//    @Autowired
+//    RabbitTemplate rabbitTemplate;
+    @Test
+    public void test1(){
+        Queue queue = new Queue("hello-java-queue-test",true,false,false,null);
+        amqpAdmin.declareQueue(queue);
+
+//        rabbitTemplate.
+    }
+
 }

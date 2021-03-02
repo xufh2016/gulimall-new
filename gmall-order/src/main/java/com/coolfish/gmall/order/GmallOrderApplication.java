@@ -5,6 +5,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 
+import java.util.HashMap;
+
 /**
  * 使用rabbitmq步骤：
  * 1.引入amqp的场景启动器，RabbitAutoConfiguration就会自动生效
