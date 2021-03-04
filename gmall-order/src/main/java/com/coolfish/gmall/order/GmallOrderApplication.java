@@ -15,7 +15,7 @@ import java.util.HashMap;
  * 4.使用注解@EnableRabbit 开启Rabbitmq使用
  */
 @SpringBootApplication
-//@EnableDiscoveryClient
+@EnableDiscoveryClient
 @EnableRabbit
 public class GmallOrderApplication {
 

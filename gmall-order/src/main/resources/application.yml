@@ -19,6 +19,8 @@ spring:
 #    只要抵达队列，以异步发送优先回调我们这个returnconfirm
     template:
       mandatory: true
+  application:
+    name: gmall-order
 #      设置消费端手动签收模式
 #    listener:
 #      simple:
