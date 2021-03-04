@@ -9,11 +9,13 @@ import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.support.DefaultSingletonBeanRegistry;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import javax.annotation.Resource;
-
+/**
+ * rabbitmq物理服务器有多个vhost（虚拟机），虚拟机里面可以有多个交换机（exchange），每个交换机里面可以有多个queue，每个queue需要和交换机进行绑定binding
+ * RabbitTemplate.ConfirmCallback和RabbitTemplate.ReturnCallback分别是到交换机的回调和到队列的回调（这是消息生产者的确认机制）
+ * 消费者的确认机制是通过接收消息时的channel.basicAck进行签收，通过channel.basicNack或channel.basicReject来进行拒签
+ */
 @Slf4j
 @SpringBootTest
 class GmallOrderApplicationTests {
