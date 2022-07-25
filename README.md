@@ -22,12 +22,12 @@
        active: dev
    ```
     
-##使用nacos注册中心
+## 使用nacos注册中心
 + 在主类上标记@EnableDiscoveryClient注解
 + 在yml文件中配置：spring.cloud.nacos.discovery.server-addr=127.0.0.1:8848（nacos的地址）
 + 再配置spring.application.name=gmall-product(微服务名)
 
-##使用openFeign进行远程调用
+## 使用openFeign进行远程调用
 1. 在pom文件中引入open-feign
 2. 在调用方编写一个接口，告诉springcloud这个接口需要调用远程服务,声明接口中的每一个方法都是调用哪个远程服务的那个请求，实例如下
     ```java
@@ -49,7 +49,7 @@
     }
     ```
 4. 使用openfeign做远程调用时，方法签名可以不一致，但请求方式、返回值、请求路径必须一致，方法参数需要json模型一致
-##nacos作为配置中心使用
+## nacos作为配置中心使用
 1. 引入spring-cloud-starter-alibaba-nacos-config依赖
 2. 创建一个bootstrap.properties文件，文件的名字是固定的，并在其中配置如下
     ```properties
@@ -75,7 +75,7 @@
     ```
  4. 配置中心的配置文件默认命名规则为：服务名.properties.
  
- ###nacos配置中的详细解释
+ ### nacos配置中的详细解释
  * 细节
  1. 命名空间：配置隔离，
     默认：public（保留空间）；默认新增的所有配置都在public空间
@@ -103,7 +103,7 @@
       spring.cloud.nacos.config.ext-config是个集合List   
  6. 各个微服务中添加了配置中心的依赖以后，需要在资源文件中添加bootstrap.properties的配置文件，并配置相关的配置中心地址等相关信息
 
-##网关Gateway
+## 网关Gateway
 
 * 术语：
  1. 路由  
@@ -148,7 +148,7 @@
             - RewritePath=/api/(?<segment>),/$\{segment}
     ``` 
  
- ##Mybatis Plus
+ ## Mybatis Plus
  
  1. 设置mybatis debug输出
     ```yaml
@@ -228,7 +228,7 @@
       outagedetectioninterval=2
       ```
 
-##Aliyun OSS 阿里对象云存储
+## Aliyun OSS 阿里对象云存储
 1. 引入依赖
     ```xml
      <dependency>
@@ -288,7 +288,7 @@
         return R.ok().put("data", respMap);
     }
     ```  
- ##JSR 303
+ ## JSR 303
  1. 给bean添加校验规则注解并定义自己的message提示,来源包如下
     引入包依赖,第一个为基础的验证包，第二个为hibernate提供的附加验证包
     ```xml
@@ -536,12 +536,12 @@
  6. @Transactional  注解只能应用到 public 可见度的方法上。默认情况下，Spring会对unchecked异常进行事务回滚；如果是checked异常则不回滚。
      通俗一点：你写代码出现的空指针等异常，会被回滚，文件读写，网络出问题，spring就没法回滚了。
  7. 
-##VO
+## VO
 1.  View Object，用于接收页面传递的数据，封装对象。将业务处理完成的对象，封装成页面要用的对象
 
 
 
-##Elasticsearch
+## Elasticsearch
 1. 是一个开源的分布式的搜索分析引擎。可以这样理解，ES中的Index对应Mysql中的database，Type对应Mysql中的Table，
    Document对应Mysql表中的一条一条记录
    + Index（索引）
@@ -621,7 +621,7 @@
 
 
 
-##搭建域名访问环境
+## 搭建域名访问环境
 1. 安装nginx
    + 随便启动一个nginx实例，只是为了复制出配置
      + docker run -p 80:80 --name mynginx -d nginx:1.10
@@ -662,7 +662,7 @@
    
 
 
-##压力测试
+## 压力测试
 1. hps： 每秒点击数（hits per second）,单位是次/秒
 2. tps： 系统每秒处理交易数，单位是笔/秒（transaction per second）
 3. qps： 系统每秒处理查询次数，单位是次/秒（query per second）
@@ -683,8 +683,8 @@
    
    
    
-###JMeter报错
-####JMeter Address Already in use
+### JMeter报错
+#### JMeter Address Already in use
 win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端口为1024~5000，并且要四分钟来循环回收他们，这样就导致我们在短时间内跑大  
 量的请求时将端口占满了
 1. cmd中，用regedit命令打开注册表
@@ -696,7 +696,7 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
 
 
 
-##缓存与分布式缓存
+## 缓存与分布式缓存
 
 1. 哪些数据适合放入缓存？(redis是单线程的)
    + 即时性、数据一致性要求不高的
@@ -891,7 +891,7 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
      + 遇到实时性、一致性要求高的数据，就应该查数据库，即使慢点。
      
      
-##Spring Cache
+## Spring Cache
 1. 简介
    + Spring Cache是Spring框架提供的对缓存使用的抽象类，支持多种缓存
    + Spring从3.1开始定义了Cache和CacheManager接口来统一不同的缓存技术；并支持使用JCache（JSR-107）注解简化我们开发；
@@ -1045,7 +1045,7 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
       
       
       
-##线程池
+## 线程池
 1. 自定义线程池
     ```java
     package net.agrorobot.car_daemon.config;
@@ -1202,9 +1202,9 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
        return skuItemVo;
    }
    ```
-#FastDFS
+# FastDFS
 
-##linux
+## linux
 1. apt修改国内镜像源使用命令：
     ```shell script
     sudo nona /etc/apt/sources.list
@@ -1225,7 +1225,7 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
    sudo apt-get update
    ```
 
-##页面跳转
+## 页面跳转
 1. 可以用这种方式替换
    ```java
    package com.coolfish.gmall.auth.config;
@@ -1375,7 +1375,7 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
        
 
 
-##多系统单点登录
+## 多系统单点登录
 1. 
 
 
@@ -1383,7 +1383,7 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
 
 
 
-##购物车中的知识点
+## 购物车中的知识点
 1. 拦截器的使用
    ```java
    package com.coolfish.gmall.cart.interceptor;
@@ -1503,7 +1503,7 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
    和修改。
 
 
-##RabbitMQ
+## RabbitMQ
 1. 核心概念 
    + message broker消息代理，简单理解就是安装了消息中间件的服务器
      
@@ -1546,7 +1546,7 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
 
 
 
-##Java线程与硬件处理器
+## Java线程与硬件处理器
 在Window系统和Linux系统上，Java线程的实现是基于一对一的线程模型，所谓的一对一模型，实际上就是通过语言级别层面程序去间接调用系统
 内核的线程模型，即我们在使用Java线程时，Java虚拟机内部是转而调用当前操作系统的内核线程来完成当前任务。这里需要了解一个术语，内核
 线程(Kernel-Level Thread，KLT)，它是由操作系统内核(Kernel)支持的线程，这种线程是由操作系统内核来完成线程切换，内核通过操作调度
@@ -1557,7 +1557,7 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
 ![avatar](static/img/7925105-79fa27d5bba342d5.webp)
 
 
-#Idea报错信息
+# Idea报错信息
 1. IDEA下报 SpringBoot Configuration Annotation Processor not found in classpath解决方案:
    ```xml
    <!-- 自定义的元数据依赖-->
@@ -1568,7 +1568,7 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
    </dependency>
    ```
    
-#细节
+# 细节
 1. 统一的格式化时间，使用配置文件
    ```yaml
    spring:
@@ -1692,7 +1692,7 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
     }
   ```
   spring-boot-starter-web默认引入了jackson的相关包。 
-#Spring Boot
+# Spring Boot
 
 1. 遇到的注解 @QueryParam和@PathParam ，这两个注解是javax.websocket.server下的注解，也就是说是websocket的注解
    * @QueryParam 主要通过键值对这样取 如 a=1     QueryParam("a")
@@ -1729,13 +1729,13 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
 
 
 
-#并发发生的根本原因
+# 并发发生的根本原因
 ## CPU核心数，线程数，时间片轮转机制解读
 + CPU个数：是指物理上，即硬件上的核心数；
 + 核心数：是逻辑上的，简单理解为逻辑上模拟出的核心数；
 + 线程数：是同一时刻设备能并行执行的程序个数，线程数 = cpu个数 * 核数；
 
-##CPU核心数和Java多线程概念
+## CPU核心数和Java多线程概念
 + 单个CPU线程在同一时刻只能执行单一Java程序，也就是一个线程。
 + 单个线程同时只能在单个CPU线程中执行
 + 线程是操作系统最小的调度单位，进程是资源分配的最小单位
@@ -1743,19 +1743,19 @@ win本身提供的端口访问机制的问题。win提供给tcp/ip连接的端�
 + Java多线程并不是由于CPU线程数为多个才称为多线程，当Java线程数大于CPU线程数时，操作系统使用时间片轮转机制，采用线程调度算法，
   频繁的进行线程切换
 
-##IO阻塞时，线程会释放CPU吗？
+## IO阻塞时，线程会释放CPU吗？
   当线程处于IO操作时，线程是阻塞的，线程由运行状态切换到等待状态。此时CPU会做上下文切换，以便处理其他程序；当IO操作完成后，CPU会
   收到一个来自硬盘的中断信号，CPU正在执行的线程因此会被打断，回到ready队列。而先前因IO而waiting的线程随着IO的完成也再次回到就绪
   队列，此时CPU可能会选择他执行
 
-##Java中并发和并行的概念
+## Java中并发和并行的概念
 + 并行：指两个或多个事件在同一时刻点发生，CPU同时执行；
 + 并发：指两个或多个事件在同一时间段内发生，CPU交替执行；
 
-##Java线程可以同时在多个核上运行吗？
+## Java线程可以同时在多个核上运行吗？
   操作系统是基于线程调度的，在同一时刻，Java进程中不同的线程可能会在不同的核上并行运行。
 
-##Java内存模型
+## Java内存模型
 Java 内存模型实际上就是规范了 JVM 如何提供按需禁用缓存和重排序优化的方法。其核心就包括volatile、synchronized 和 final 三个关键
 字，以及几项Happens-Before 规则。有了JMM 作为java的开发人员只需要使用几个关键字(sychronized，volatile，final) ,并且理解几个
 happens before规则，就能根据自己的需要来禁用缓存优化和指令重排序，从而避免并发问题。  
@@ -1842,7 +1842,7 @@ int i = 10;
       1. 对变量的写操作不依赖于当前值
       2. 该变量没有包含在具有其他变量的不变式中
       实际上，这些条件表明，可以被写入volatile变量的这些有效值独立于任何程序的状态，包括变量的当前状态
-##时间片轮转机制
+## 时间片轮转机制
   + 时间片轮转法（Round-Robin，RR）
     根据先进先出原则，排成队列（就绪队列），调度时，将CPU分配给队首进程，让其执行一个时间段（称为时间片），时间片通常为10-100ms，
     当执行的时间片用完时，会由计数器发出时钟中断请求，调度程序便据此来停止该进程的执行，并将它排到队列末尾，然后再把CPU重新分配给
@@ -1862,7 +1862,7 @@ int i = 10;
     - Java在调度机制上采用的是抢占式的线程调度机制
     - Java线程在运行的过程中多个线程之间是协作式的
 
-##并发理论基础：并发问题产生的三大根源
+## 并发理论基础：并发问题产生的三大根源
 
 通俗来讲就是操作系统为了最大化的利用cpu，而有了多线程概念。操作系统的多线程对应到硬件上就是cpu的核心数，当操作系统的线程数大于cpu
 核数时，cpu就会采用时间片轮转机制进行切换。
@@ -1899,7 +1899,7 @@ int i = 10;
    们做菜的时候会把熟的最慢的菜最先开始煮，然后在这个菜熟的时间段去做其它的菜，通过这种方式减少CPU的等待，更好的利用CPU的资源*。
    *指令重排，可能会发生在两个没有相互依赖关系之间的指令。*
 
-##并发基础理论：缓存可见性问题、mesi协议、内存屏障
+## 并发基础理论：缓存可见性问题、mesi协议、内存屏障
 1. CPU缓存导致的可见性问题  
    通过如下方式保证各缓存间的数据一致性问题：  
    + 总线锁  
@@ -1920,11 +1920,11 @@ int i = 10;
    
 
   
-##管程(Moniter) 并发编程的基本心法
+## 管程(Moniter) 并发编程的基本心法
 1. 所谓管程：指的是管理共享变量以及对共享变量的操作过程，让它们支持并发。翻译为Java就是管理类的成员变量和成员方法，让这个类是线程
    安全的。  
    
-##Java并发关键字final
+## Java并发关键字final
 成员变量分为类变量（被static修饰的变量）和实例变量
 1. 类变量：必须要在静态初始化块中指定初始值或声明该类变量时指定初始值，而且只能在这两个地方之一进行指定
 2. 实例变量：必须要在非静态初始化块，声明该实例变量或者在构造器中指定初始值，而且只能在这三个地方进行指定
@@ -1944,7 +1944,7 @@ int i = 10;
 
 
 
-#TCP/IP协议族
+# TCP/IP协议族
 1. TCP：建立连接需要三次握手，而断开连接则需要四次握手，这是因为TCP的办关闭造成的。
 2. TCP断开连接的流程：
    * 某个应用进程首先调用close，称该端执行“主动关闭”（active close）。该端的TCP于是发送一个FIN分节，表示数据发送完毕。
@@ -1958,7 +1958,7 @@ int i = 10;
      1. TCP用于在传输层有必要实现可靠传输的情况。由于它是面向有链接并具备顺序控制、重发控制等机制的，所以他可以为应用提供可靠的传输
      2. UDP主要用于那些对高速传输和实时性有较高要求的通信或广播通信，多播或广播通信中也用的UDP
      
-##Websocket
+## Websocket
 1. socket原理
    * Socket连接，至少需要一堆套接字，分别为clientSocket、serverSocket连接分为3个步骤：
      1. 服务器监听：服务器并不定位具体客户端的套接字，而是时刻处于监听状态；
@@ -2103,7 +2103,7 @@ int i = 10;
       ```
       @OnOpen标注的方法在Websocket连接开始时被调用， Session作为参数。另外一个@OnClose标注的方法在连接关闭时被调用。
       
-##Java8中的Optional
+## Java8中的Optional
 1. Optional容器类  
    这是一个可以为null的容器对象。如果值存在则isPresent()方法会返回true，调用get()方法会返回该对象。
    + of：为非null的值创建一个Optional
@@ -2119,7 +2119,7 @@ int i = 10;
      否则返回空Optional。(简单讲就是返回想要的数据，类比list.stream().map()方法)
    + flatMap： 如果有值，为其执行mapping函数返回Optional类型返回值，否则返回空Optional。flatMap与map
    
-##AOP
+## AOP
 1. Aspect(切面)  
    @Aspect注解：将一个类定义为一个切面类。  
    aspect由pointcut和advice组成，它既包含了横切逻辑的定义，也包括了连接点的定义。Aop的工作重心在于如何将增强织入目标对象的连接上

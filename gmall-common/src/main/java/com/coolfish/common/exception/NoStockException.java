@@ -6,7 +6,7 @@ import lombok.Setter;
 /**
  * @Description: 无库存抛出的异常
  * @Created: with IntelliJ IDEA.
- * @author: 夏沫止水
+ * @author: xufh
  * @createTime: 2020-07-05 11:39
  **/
 
